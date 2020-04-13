@@ -230,7 +230,9 @@ exports.posswords = [
   'inconsistency',
   'counteractive',
   'picoeconomics',
-
+  'pavlov',
+  'pavlovian',
+  
   // general nerdy words
   'bot',
   'data',
