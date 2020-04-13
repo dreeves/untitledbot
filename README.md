@@ -11,3 +11,4 @@ See Slack's [Getting Started Guide](https://api.slack.com/start/building/bolt) f
 CHANGELOG
 
 2020-04-12: Initial version
+2020-04-13: Ignore anything with punctuation or less than 2 letters
