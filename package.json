@@ -1,0 +1,24 @@
+{
+  "name": "lexiguess",
+  "version": "1.0.0",
+  "description": "A dictionary guessing game based on a basic template to spin up a Bolt app for Slack",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "@slack/bolt": "^2.0.1"
+  },
+  "engines": {
+    "node": "12.x"
+  },
+  "repository": {
+    "url": "https://github.com/dreeves/lexiguess"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch",
+    "express"
+  ]
+}
