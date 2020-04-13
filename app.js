@@ -67,7 +67,9 @@ function introblurb(x) {
   return `Hi! I'm the Lexiguess bot. I just woke up and remember exactly nothing about anything we may have talked about in the past. :blush: But I've thought of a (new) word if you want to try guessing it. It'll be so fun! I picked it from a bunch of words @dreev gave me. I'm assuming you typed "*${x}*" as your guess, so, here we go! Wheeee! :checkered_flag:\n\n`
 }
 
-const againblurb = `Hello, McFly, you already guessed that. (Ok, I'm shutting up about any repeats now :shushing_face:)`
+function againblurb(x) {
+  return `Hello, McFly, you already guessed "${x}". (Ok, I'm shutting up about any repeats now :shushing_face:)`
+}
 
 function knownblurb(x) {
   return `I am profoundly ashamed to admit I don’t know the word "${x}"! (Due to the aforementioned shame, I won't say this again :flushed:)`
@@ -91,15 +93,29 @@ function guessblurb(tries, loword, hiword) {
 // -----------------------------------------------------------------------------
 // ------------------------------ Event Handlers -------------------------------
 
+// Weirdness: If a message that matches the regex comes in while this app is
+// still starting up then Slack won't get an ack and will resend it and we 
+// typically get the word twice or even 3 times. Weirder still, the messages 
+// this app replies with often end up out of order. So if we get "foo" twice in
+// a row when the app starts, then we'll send the intro response the first time
+// and then send the "you already guessed that" response the second time but 
+// the user will see those in the wrong order which looks pretty buggy. I don't
+// know what the answer is other than to read the history of messages to see if
+// a seeming dup is an actual dup. Or maybe introduce a delay after the intro
+// message as a workaround? Or we can just call the bug low severity if it only
+// ever happens when receiving messages exactly when our app is first starting
+// up.
+
 // Someone says a single word in a channel our bot is in
-app.message(/^\s*([a-z][^\s]*)\s*$/i, async ({ context, say }) => {
-  const x = context.matches[1].toLowerCase() // word the user guessed
-  console.log(`user said ${x}`)
+app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
+  const x = context.matches[1].toLowerCase()            // word the user guessed
+  console.log(
+    `(${splur(tries, "previous guess", "previous guesses")}) new guess: "${x}"`)
  
   if (ghash[x]) {                                           // already guessed x
     if (!againflag) {
       againflag = true
-      await say(againblurb)
+      await say(againblurb(x))
     }
     return                                                          // ignore it
   } else {
@@ -143,6 +159,7 @@ app.message(/^\s*([a-z][^\s]*)\s*$/i, async ({ context, say }) => {
     await say(guessblurb(tries, loword, hiword))
   }
 })
+
 
 // Someone clicks on the Home tab of our app; render the page
 app.event('app_home_opened', async ({event, context}) => {
