@@ -109,7 +109,7 @@ function guessblurb(tries, loword, hiword) {
 // a seeming dup is an actual dup. Or maybe introduce a delay after the intro
 // message as a workaround? Or we can just call the bug low severity if it only
 // ever happens when receiving messages exactly when our app is first starting
-// up.
+// up. PS: Oops, just saw a dup happen without a restart!
 
 // Someone says a single word in a channel our bot is in
 app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
@@ -153,6 +153,7 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   tries++             // if we made it this far then x is actually a legit guess
   if (x === daword) { 
     await say(gloryblurb(x, tries))
+    console.log(`Guessed it ("${x}") in ${splur(tries, "try", "tries")}!`)
     lexireset()                   // just wipe our memory and be ready to repeat
     return
   }
