@@ -3,11 +3,16 @@ const { App } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
 console.log("Bolt package loaded, fetching wordlist...")
 // make sure wordlist only has words between 'aardvark' and 'zymurgy'
 let   wordlist  = require('./data/sowpods.js').wordlist
+const dictsize = wordlist.length
 const posswords = require('./data/dawords.js').posswords
 wordlist = wordlist.concat(posswords)
 wordlist = [...new Set(wordlist)]
 wordlist.sort()
-console.log(`Dictionary loaded: ${wordlist.length} words`)
+const d = dictsize         // original dict size (from aardvark to zymurgy)
+const p = posswords.length // number of possible words to pick for the game
+const w = wordlist.length  // size of the augmented dictionary
+const n = w-d              // number of neologisms in the possible words list
+console.log(`Dict: ${d}, Possible words: ${p}, Neologisms: ${n}, Total: ${w}`)
 
 let tries             // how many tries it takes to guess
 let loword            // earliest word in the dictionary it could be
