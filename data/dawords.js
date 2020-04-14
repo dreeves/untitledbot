@@ -8,12 +8,21 @@
 
 
 exports.posswords = [
+
+  // unsorted so far
+  'skive',
+  'kvetch',
+  'auction',
+  'bid',
+  'credit',
+  //'flakeproof',
+
   // words I didn't know from priory of the orange tree
   'priory',
-  'gorbellied',
+  //'gorbellied',
   'glister',
-  'orisen',
-  'arch',
+  //'orison',
+  //'arch',
   'plinth',
   'palanquin',
 
@@ -143,6 +152,28 @@ exports.posswords = [
   'slytherin',
   'stickk',
   'pavlok',
+  'mast',
+  'impetuous',
+  'lazy',
+  'delayed',
+  'immediate',
+  'contract',
+  'impulsive',
+  'lollygag',
+  'overindulge',
+  'forgo',
+  'masochism',
+  'deadline',
+  'diet',
+  'yaw',
+  'swath',
+  'backlog',
+  'backlogged',
+  'wolf',
+  'postposit',
+  'intend',
+  'track',
+  'gamble',
   
   // beeminder autodata integration partners and related apps
   'ifttt',
@@ -232,6 +263,7 @@ exports.posswords = [
   'picoeconomics',
   'pavlov',
   'pavlovian',
+  'economics',
   
   // general nerdy words
   'bot',
@@ -264,36 +296,8 @@ exports.posswords = [
   'quantum',
   'hacker',
   'goodhart',
-
-  // unsorted so far
-  'economics',
-  'mast',
-  'impetuous',
-  'lazy',
-  'delayed',
-  'immediate',
-  'contract',
-  'impulsive',
-  'lollygag',
-  'overindulge',
-  'forgo',
-  'postposit',
-  'skive',
-  'kvetch',
-  'intend',
-  'auction',
-  'bid',
-  'track',
-  'credit',
-  'gamble',
-  'masochism',
-  'deadline',
-  'diet',
-  'yaw',
-  'swath',
-  'backlog',
-  'backlogged',
-  'wolf',
-  //'flakeproof',
+  'asyndeton',
+  'apophasis',
+  'apotheosis',
   
 ]
