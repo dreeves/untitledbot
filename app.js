@@ -24,6 +24,7 @@ let rangeflag         // whether the bot's said it ignores out-of-range words
 let againflag         // whether the bot's said it ignores already guessed words
 //let multiflag       // whether the bot's said it ignores multiword messages
 let ghash             // things the user already guessed
+let prevstring = "magic_string_no_user_will_ever_type_1547"
 
 // -----------------------------------------------------------------------------
 // --------------------------------- Functions ---------------------------------
@@ -98,6 +99,7 @@ function guessblurb(tries, loword, hiword) {
 // -----------------------------------------------------------------------------
 // ------------------------------ Event Handlers -------------------------------
 
+// #SCHDEL
 // Weirdness: If a message that matches the regex comes in while this app is
 // still starting up then Slack won't get an ack and will resend it and we 
 // typically get the word twice or even 3 times. Weirder still, the messages 
@@ -112,43 +114,49 @@ function guessblurb(tries, loword, hiword) {
 // up. PS: Oops, just saw a dup happen without a restart!
 // Maybe we want to just ignore 2 guesses of the exact same string in a row?
 
-// Someone says a single word in a channel our bot is in
+
+// Someone says a single strictly alphabetic word in a channel our bot is in
 app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
-  const x = context.matches[1].toLowerCase()            // word the user guessed
+  let x = context.matches[0]       // exact string the user typed
+  if (x === prevstring) {          // exact same thing twice in a row: ignore it
+    console.log(`DUP "${x}"`)      // (happens sometimes due to network flakage;
+    return                         // if user did it, fine to ignore that too)
+  } else { prevstring = x }
+  x = x.toLowerCase()              // canonicalized word the user guessed
   console.log(
     `(${splur(tries, "previous guess", "previous guesses")}) new guess: "${x}"`)
  
-  if (ghash[x]) {                                           // already guessed x
+  if (ghash[x]) {                  // already guessed x
     if (!againflag) {
       againflag = true
       await say(againblurb(x))
     }
-    return                                                          // ignore it
+    return                         // ignore it
   } else {
-    ghash[x] = true                   // remember that they said it and continue
+    ghash[x] = true                // remember that they said it and continue
   }
 
-  if (!(x in dict) && !introflag) {             // off the bat with unknown word
+  if (!(x in dict) && !introflag) { // off the bat with unknown word
     await say(introblurb(x) + `um... _uh oh_\n\n` + knownblurb(x))
     knownflag = true
     introflag = true
-    return                                                          // ignore it
+    return                         // ignore it
   }
   
-  if (x <= loword || x >= hiword) {                              // out of range
+  if (x <= loword || x >= hiword) { // out of range
     if (!rangeflag) {
       rangeflag = true
       await say(rangeblurb(x, loword, hiword))
     }
-    return                                                          // ignore it
+    return                         // ignore it
   }
   
-  if (!(x in dict)) {                                            // unknown word
+  if (!(x in dict)) {              // unknown word
     if (!knownflag) {
       knownflag = true
       await say(knownblurb(x))
     }
-    return                                                          // ignore it
+    return                         // ignore it
   }
   
   tries++             // if we made it this far then x is actually a legit guess
