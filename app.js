@@ -30,9 +30,9 @@ let ghash             // things the user already guessed
 
 // Singular or plural
 function splur(n, s, p=null) {
-  if (n===1) return `${n} ${s}`
-  return p===null ? `${n} ${s}s`
-                  : `${n} ${p}`
+  return   n===1    ? `${n} ${s}`
+         : p===null ? `${n} ${s}s`
+         :            `${n} ${p}`           
 }
 
 function lexireset() {
@@ -110,6 +110,7 @@ function guessblurb(tries, loword, hiword) {
 // message as a workaround? Or we can just call the bug low severity if it only
 // ever happens when receiving messages exactly when our app is first starting
 // up. PS: Oops, just saw a dup happen without a restart!
+// Maybe we want to just ignore 2 guesses of the exact same string in a row?
 
 // Someone says a single word in a channel our bot is in
 app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
@@ -134,18 +135,18 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
     return                                                          // ignore it
   }
   
-  if (!(x in dict)) {                                            // unknown word
-    if (!knownflag) {
-      knownflag = true
-      await say(knownblurb(x))
+  if (x <= loword || x >= hiword) {                              // out of range
+    if (!rangeflag) {
+      rangeflag = true
+      await say(rangeblurb(x, loword, hiword))
     }
     return                                                          // ignore it
   }
   
-  if (dict[x] <= dict[loword] || dict[x] >= dict[hiword]) {      // out of range
-    if (!rangeflag) {
-      rangeflag = true
-      await say(rangeblurb(x, loword, hiword))
+  if (!(x in dict)) {                                            // unknown word
+    if (!knownflag) {
+      knownflag = true
+      await say(knownblurb(x))
     }
     return                                                          // ignore it
   }
