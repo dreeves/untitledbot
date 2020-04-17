@@ -3,6 +3,26 @@
 // so we're commenting out words not strictly between those.
 
 exports.wordlist = [
+  
+// variants of the words in dawords that the bot ought to know
+'lifehacks',
+'lifehacked',
+'lifehacker',
+'lifehacking',
+'quiesces',
+'quiesced',
+'quiescing',
+'rerailed',
+'rerails',
+'rerailing',
+'precommit',
+'precommits',
+'precommitted',
+'precommitting',
+
+// other words the bot ought to know
+'abustle',
+
 //'aa',
 //'aah',
 //'aahed',
