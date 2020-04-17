@@ -1,6 +1,4 @@
-// Standard SOWPODS word list for international Scrabble.
-// But initially we say the word is between "aardvark" and "zymurgy" 
-// so we're commenting out words not strictly between those.
+// Standard SOWPODS word list for international Scrabble, with additions.
 
 exports.wordlist = [
   
@@ -23,16 +21,16 @@ exports.wordlist = [
 // other words the bot ought to know
 'abustle',
 
-//'aa',
-//'aah',
-//'aahed',
-//'aahing',
-//'aahs',
-//'aal',
-//'aalii',
-//'aaliis',
-//'aals',
-//'aardvark',
+'aa',
+'aah',
+'aahed',
+'aahing',
+'aahs',
+'aal',
+'aalii',
+'aaliis',
+'aals',
+'aardvark',
 'aardvarks',
 'aardwolf',
 'aardwolves',
@@ -267767,11 +267765,11 @@ exports.wordlist = [
 'zymotically',
 'zymotics',
 'zymurgies',
-//'zymurgy',
-//'zythum',
-//'zythums',
-//'zyzzyva',
-//'zyzzyvas',
-//'zzz',
-//'zzzs',
+'zymurgy',
+'zythum',
+'zythums',
+'zyzzyva',
+'zyzzyvas',
+'zzz',
+'zzzs',
 ]
