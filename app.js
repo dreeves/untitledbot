@@ -14,6 +14,7 @@ const w = wordlist.length  // size of the augmented dictionary
 const n = w-d              // number of neologisms in the possible words list
 console.log(`Dict: ${d}, Possible words: ${p}, Neologisms: ${n}, Total: ${w}`)
 
+let tug               // the user's guess
 let tries             // how many tries it takes to guess
 let loword            // earliest word in the dictionary it could be
 let hiword            // latest word in the dictionary it could be
@@ -29,11 +30,9 @@ let prevstring = "magic_string_no_user_will_ever_type_1547"
 // -----------------------------------------------------------------------------
 // --------------------------------- Functions ---------------------------------
 
-// Singular or plural
-function splur(n, s, p=null) {
-  return   n===1    ? `${n} ${s}`
-         : p===null ? `${n} ${s}s`
-         :            `${n} ${p}`           
+function splur(n, s, p=null) { return   n===1    ? `${n} ${s}`  // Singular or
+                                      : p===null ? `${n} ${s}s` // plural or
+                                      :            `${n} ${p}`  // irregular pl.
 }
 
 function lexireset() {
@@ -47,6 +46,16 @@ function lexireset() {
   againflag = false
   ghash = {}
   console.log(`We've thought of our word (shhhhh, it's "${daword}")`)
+}
+
+// Do macro substitution on the given blurb, the same way javascript string
+// interpolation does it
+function macsub(s) {
+  return s.replace(/\${tug}/,    tug)
+          .replace(/\${tries}/,  tries)
+          .replace(/\${loword}/, loword)
+          .replace(/\${hiword}/, hiword)
+          .replace(/\${daword}/, daword)
 }
 
 // -----------------------------------------------------------------------------
@@ -96,80 +105,72 @@ function guessblurb(tries, loword, hiword) {
   return `(${tries}) My word is between "${loword}" and "${hiword}"!`
 }
 
+/*
+
+1st unk oor rep dup inf knf raf agf
+*/
+
 // -----------------------------------------------------------------------------
 // ------------------------------ Event Handlers -------------------------------
 
-// #SCHDEL
-// Weirdness: If a message that matches the regex comes in while this app is
-// still starting up then Slack won't get an ack and will resend it and we 
-// typically get the word twice or even 3 times. Weirder still, the messages 
-// this app replies with often end up out of order. So if we get "foo" twice in
-// a row when the app starts, then we'll send the intro response the first time
-// and then send the "you already guessed that" response the second time but 
-// the user will see those in the wrong order which looks pretty buggy. I don't
-// know what the answer is other than to read the history of messages to see if
-// a seeming dup is an actual dup. Or maybe introduce a delay after the intro
-// message as a workaround? Or we can just call the bug low severity if it only
-// ever happens when receiving messages exactly when our app is first starting
-// up. PS: Oops, just saw a dup happen without a restart!
-// Maybe we want to just ignore 2 guesses of the exact same string in a row?
-
-
 // Someone says a single strictly alphabetic word in a channel our bot is in
 app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
-  let x = context.matches[0]       // exact string the user typed
-  if (x === prevstring) {          // exact same thing twice in a row: ignore it
-    console.log(`DUP "${x}"`)      // (happens sometimes due to network flakage;
+  tug = context.matches[0]         // exact string the user guessed
+  if (tug === prevstring) {        // exact same thing twice in a row: ignore it
+    console.log(`DUP "${tug}"`)    // (happens sometimes due to network flakage;
     return                         // if user did it, fine to ignore that too)
-  } else { prevstring = x }
-  x = x.toLowerCase()              // canonicalized word the user guessed
-  console.log(
-    `(${splur(tries, "previous guess", "previous guesses")}) new guess: "${x}"`)
+  } else { prevstring = tug }
+  tug = tug.toLowerCase()          // canonicalized word the user guessed
+  console.log(`(${splur(tries, "previous guess", 
+                               "previous guesses")}) new guess: "${tug}"`)
  
-  if (ghash[x]) {                  // already guessed x
+  if (ghash[tug]) {                // already guessed x
     if (!againflag) {
       againflag = true
-      await say(againblurb(x))
+      await say(againblurb(tug))
     }
     return                         // ignore it
   } else {
-    ghash[x] = true                // remember that they said it and continue
+    ghash[tug] = true              // remember that they said it and continue
   }
 
-  if (!(x in dict) && !introflag) { // off the bat with unknown word
-    await say(introblurb(x) + `um... _uh oh_\n\n` + knownblurb(x))
+  if (!(tug in dict) && !introflag) { // off the bat with unknown word
+    await say(introblurb(tug) 
+              + `um... _uh oh_\n\n` 
+              + knownblurb(tug)
+              + `\n\n` + guessblurb(tries, loword, hiword))
     knownflag = true
     introflag = true
     return                         // ignore it
   }
   
-  if (x <= loword || x >= hiword) { // out of range
+  if (tug <= loword || tug >= hiword) { // out of range
     if (!rangeflag) {
       rangeflag = true
-      await say(rangeblurb(x, loword, hiword))
+      await say(rangeblurb(tug, loword, hiword))
     }
     return                         // ignore it
   }
   
-  if (!(x in dict)) {              // unknown word
+  if (!(tug in dict)) {              // unknown word
     if (!knownflag) {
       knownflag = true
-      await say(knownblurb(x))
+      await say(knownblurb(tug))
     }
     return                         // ignore it
   }
   
-  tries++             // if we made it this far then x is actually a legit guess
-  if (x === daword) { 
-    await say(gloryblurb(x, tries))
-    console.log(`Guessed it ("${x}") in ${splur(tries, "try", "tries")}!`)
+  tries++           // if we made it this far then tug is actually a legit guess
+  if (tug === daword) { 
+    await say(gloryblurb(tug, tries))
+    console.log(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)
     lexireset()                   // just wipe our memory and be ready to repeat
     return
   }
-  if (dict[x] < dict[daword]) { loword = x } else { hiword = x }
+  if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
   if (!introflag) {
     introflag = true
-    await say(introblurb(x) + guessblurb(tries, loword, hiword))
+    await say(introblurb(tug) + guessblurb(tries, loword, hiword))
   } else {
     await say(guessblurb(tries, loword, hiword))
   }
@@ -218,13 +219,9 @@ app.event('app_home_opened', async ({event, context}) => {
           { "type": "actions",
             "elements": [
               { "type": "button",
-                "text": {
-                  "type": "plain_text",
-                  "text": "Click on me!",
-                }
-              }
-            ]
-          }
+                "text": { "type": "plain_text",
+                          "text": "Click on me!",
+          } ] } }
 */
         ]
       }
