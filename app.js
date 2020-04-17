@@ -20,7 +20,7 @@ let loword            // earliest word in the dictionary it could be
 let hiword            // latest word in the dictionary it could be
 let daword            // the actual word the bot is thinking of
 let introflag         // whether the bot's introduced itself yet
-let knownflag         // whether the bot's said it ignores non-dictionary words
+let snarkflag         // whether the bot's said it ignores non-dictionary words
 let rangeflag         // whether the bot's said it ignores out-of-range words
 let againflag         // whether the bot's said it ignores already guessed words
 //let multiflag       // whether the bot's said it ignores multiword messages
@@ -41,15 +41,15 @@ function lexireset() {
   hiword = 'zymurgy'
   tries = 0
   introflag = false 
-  knownflag = false 
+  snarkflag = false 
   rangeflag = false
   againflag = false
   ghash = {}
   console.log(`We've thought of our word (shhhhh, it's "${daword}")`)
 }
 
-// Do macro substitution on the given blurb, Ruby string interpolation style
-function macsub(s) {
+// Macro-expand the given blurb, Ruby string interpolation style
+function mex(s) {
   return s.replace(/#{tug}/g,        tug)
           .replace(/#{tries}/g,      tries)
           .replace(/#{loword}/g,     loword)
@@ -89,10 +89,19 @@ Wheeee! :checkered_flag:\n\n`
 
 const againblurb = `\
 Hello, McFly, you already guessed "#{tug}". (Ok, I'm shutting up about any repeats now :shushing_face:)`
-
-const knownblurb = `
+      
+const snarkblurb = `\
 I am profoundly ashamed to admit I don’t know the word "#{tug}"! \
 (Due to the aforementioned shame, I won't say this again :flushed:)`
+
+const introsnarkblurb = `${introblurb}wait, _uh oh_\n\n${snarkblurb}\n\n`
+
+const snarkrangeblurb = `\
+Not only is "#{tug}" not between "#{loword}" and "#{hiword}" in the \
+dictionary, as far as I can tell it isn't in the dictionary at all! \
+(One of us should probably be pretty embarrassed at this point. \
+I shan't speak of this awkwardness -- either words I don't know or words \
+outside the current range -- again.)`
 
 const rangeblurb = `\
 Ahem, "#{tug}" is not between "#{loword}" and "#{hiword}" in the dictionary! \
@@ -101,6 +110,11 @@ From now on you'll get the silent treatment when that happens. \
 about other things and don't want me chiming in unless you're actually \
 guessing in-bounds words. :shushing_face:)`
 
+const rangeagainblurb = `\
+Hello, McFly, you already guessed "#{tug}" -- and it's not between \
+"#{loword}" and "#{hiword}" anyway. (Ok, I'm shutting up about any repeats or \
+out-of-range words now :shushing_face:)`
+
 const gloryblurb = `\
 OMG YES, how did you know I was thinking of "#{tug}"! \
 [_stamps on floor and falls through_] \
@@ -108,34 +122,6 @@ It took you #{splurtries}... \
 [_voice fades into abyss_] :hole:`
 
 const guessblurb = `(#{tries}) My word is between "#{loword}" and "#{hiword}"!`
-
-/*
-1st guess, unknown word, repeat, immediate dup, intro/known/range/again flags
-1st unk oor rep dup inf knf raf agf
---- --- --- --- --- --- --- --- ---
-                  1                  same thing twice in a row: ignore
-  0                   0              error: introflag never set
-  1                   1              error: introflag set prematurely
-  1   0   0   0       0              normal 1st guess
-  1           1       0              error: can't be a repeat; it's the 1st msg!
-  1       1           0              error: 1st guess out of range
-  1   1               0              1st guess is an unknown word
-  0   0   0   0       1              totally normal guess case
-  0   0   0   1       1           0  hello mcfly, you already guessed that
-  0   0   0   1       1              ignore (hello mcfly)
-  0   0   1   0       1       0      ahem, out of range
-  0   0   1   0       1              ignore (ahem, out of range)
-  0   0   1   1       1       0   0  out of range AND a repeat
-  0   0   1   1       1              ignore
-  0   1   0   0       1   0          uknown word
-  0   1   0   0       1              ignore
-  0   1   0   1       1   0       0  uknown word AND a repeat
-  0   1   0   1       1              ignore
-  0   1   1   0       1   0   0      uknown and out of range
-  0   1   1   0       1              ignore
-  0   1   1   1       1   0   0   0  unknown AND out of range AND a repeat
-  0   1   1   1       1              ignore
-*/
 
 // -----------------------------------------------------------------------------
 // ------------------------------ Event Handlers -------------------------------
@@ -151,54 +137,80 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   console.log(`(${splur(tries, "previous guess", 
                                "previous guesses")}) new guess: "${tug}"`)
  
-  
-  if (ghash[tug]) {                // already guessed x
-    if (!againflag) {
-      againflag = true
-      await say(macsub(againblurb))
-    }
-    return                         // ignore it
-  } else {
-    ghash[tug] = true              // remember that they said it and continue
-  }
+  const unk = !(tug in dict)                   // unknown word
+  const oor = tug <= loword || tug >= hiword   // out of range
+  const rep = ghash[tug]                       // repeated guess
+  ghash[tug] = true                            // remember that user guessed tug
 
-  if (!(tug in dict) && !introflag) { // off the bat with unknown word
-    await say(macsub(
-      `${introblurb}um... _uh oh_\n\n${knownblurb}\n\n${guessblurb}`))
-    knownflag = true
+  if        (!introflag && rep) {              // an airhorn would be nice here
+    await say(`ERROR: First guess was somehow a repeat? This can't happen!`)
+  } else if (!introflag && unk) {              // unknown word off the bat
+    await say(mex(introsnarkblurb + guessblurb))
     introflag = true
-    return                         // ignore it
-  }
-  
-  if (tug <= loword || tug >= hiword) { // out of range
-    if (!rangeflag) {
-      rangeflag = true
-      await say(macsub(rangeblurb))
-    }
-    return                         // ignore it
-  }
-  
-  if (!(tug in dict)) {              // unknown word
-    if (!knownflag) {
-      knownflag = true
-      await say(macsub(knownblurb))
-    }
-    return                         // ignore it
-  }
-  
-  tries++           // if we made it this far then tug is actually a legit guess
-  if (tug === daword) { 
-    await say(macsub(gloryblurb))
-    console.log(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)
-    lexireset()                   // just wipe our memory and be ready to repeat
-    return
-  }
-  if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
-  if (!introflag) {
+    snarkflag = true
+  } else if (!introflag && oor) {            // out of range off the bat: just
+    tries++                                  // expand the range and run with it
+    if      (tug < loword) { loword = tug }
+    else if (tug > hiword) { hiword = tug }
+    await say(mex(introblurb + guessblurb))
     introflag = true
-    await say(macsub(introblurb + guessblurb))
+  } else if (!introflag) {
+    tries++
+    if (tug === daword) { 
+      await say(mex(introblurb + gloryblurb + `\n\n(presumably you cheated?)`))
+      console.log(`INSTAGUESSED ("${tug}") in ${splur(tries, "try", "tries")}!`)
+      lexireset()                 // just wipe our memory and be ready to repeat
+    } else {
+      if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
+      await say(mex(introblurb + guessblurb))
+      introflag = true
+    }
+  } else if (!unk && !oor && !rep) {
+    tries++
+    if (tug === daword) { 
+      await say(mex(gloryblurb))
+      console.log(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)
+      lexireset()                 // just wipe our memory and be ready to repeat
+    } else {
+      if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
+      await say(mex(guessblurb))
+    }    
+  } else if (!unk && !oor && rep && !againflag) {
+    await say(mex(againblurb))
+    againflag = true
+  } else if (!unk && !oor && rep) {
+    // repeated guess but we already gave the spiel so ignore it
+  } else if (!unk && oor && !rep && !rangeflag) {
+    await say(mex(rangeblurb))
+    rangeflag = true
+  } else if (!unk && oor && !rep) {
+    // out of range but we already gave the spiel so ignore it
+  } else if (!unk && oor && rep && !rangeflag && !againflag) {
+    await say(mex(rangeagainblurb))
+    rangeflag = true
+    againflag = true
+  } else if (!unk && oor && rep) {
+    // repeated guess & out of range but we've given one of those spiels so shhh
+  } else if (unk && !oor && !rep && !snarkflag) {
+    await say(mex(snarkblurb))
+    snarkflag = true
+  } else if (unk && !oor && !rep) {
+    // unknown word but we've given the spiel so shush
+  } else if (unk && !oor && rep && !snarkflag && !againflag) {
+    await say(`ERROR: 
+      You're repeating an unknown word so we must've snarked at you already`)
+  } else if (unk && !oor && rep) {
+    // Reguessing an unknown word so we'll have complained already so ignore it
+  } else if (unk && oor && !rep && !snarkflag && !rangeflag) {
+    await say(mex(snarkrangeblurb))
+    snarkflag = true
+    rangeflag = true
+  } else if (unk && oor && !rep) {
+    // An unknown, out of range word but we've given one of those spiels so shhh
+  } else if (unk && oor && rep && !snarkflag && !rangeflag && !againflag) {
+    await say(`ERROR: this definitely can't happen! [eats hat]`)
   } else {
-    await say(macsub(guessblurb))
+    await say(`DEBUG: definitely tell @dreev if you see this`)
   }
 })
 
@@ -261,3 +273,40 @@ app.event('app_home_opened', async ({event, context}) => {
   await app.start(process.env.PORT || 3000)
   console.log('Lexiguess app is running')
 })()
+
+
+/* #SCHDEL
+1st guess, unknown word, repeat, immediate dup, intro/snark/range/again flags
+1st unk oor rep dup inf knf raf agf
+--- --- --- --- --- --- --- --- ---
+                  1                  same thing twice in a row: ignore
+X 1   0   0   0       0              normal 1st guess
+X 1           1       0              error: can't be a repeat; it's the 1st msg!
+X 1   0   1           0              1st guess out of range
+X 1   1   0           0              1st guess is an unknown word
+X 1   1   1           0              1st guess out of range AND unknown
+  0   0   0   0       1              totally normal guess case
+
+X 0   0   0   1       1           0  hello mcfly, you already guessed that
+X 0   0   0   1       1              ignore (hello mcfly)
+X 0   0   1   0       1       0      ahem, out of range
+X 0   0   1   0       1              ignore (ahem, out of range)
+  0   0   1   1       1       0   0  out of range AND a repeat
+  0   0   1   1       1              ignore
+  0   1   0   0       1   0          uknown word
+  0   1   0   0       1              ignore
+  0   1   0   1       1   0       0  uknown word AND a repeat
+  0   1   0   1       1              ignore
+  0   1   1   0       1   0   0      uknown and out of range
+  0   1   1   0       1              ignore
+  0   1   1   1       1   0   0   0  unknown AND out of range AND a repeat
+  0   1   1   1       1              ignore
+
+ini: intro upon getting user's first guess
+rep: repeated guess of the same word
+rng: out of range
+unk: unknown word, bot snarks that it's ashamed to not know it
+yay: user guesses daword and wins
+try: user makes a guess and narrows the range
+*/
+
