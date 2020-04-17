@@ -32,8 +32,8 @@ let prevstring = "magic_string_no_user_will_ever_type_1547"
 
 function splur(n, s, p=null) { return   n===1    ? `${n} ${s}`  // Singular or
                                       : p===null ? `${n} ${s}s` // plural or
-                                      :            `${n} ${p}`  // irregular pl.
-}
+                                      :            `${n} ${p}`  // irregular
+}                                                               // plural.
 
 function lexireset() {
   daword = posswords[Math.floor(Math.random() * posswords.length)]
@@ -48,14 +48,14 @@ function lexireset() {
   console.log(`We've thought of our word (shhhhh, it's "${daword}")`)
 }
 
-// Do macro substitution on the given blurb, the same way javascript string
-// interpolation does it
+// Do macro substitution on the given blurb, Ruby string interpolation style
 function macsub(s) {
-  return s.replace(/\${tug}/,    tug)
-          .replace(/\${tries}/,  tries)
-          .replace(/\${loword}/, loword)
-          .replace(/\${hiword}/, hiword)
-          .replace(/\${daword}/, daword)
+  return s.replace(/#{tug}/g,        tug)
+          .replace(/#{tries}/g,      tries)
+          .replace(/#{loword}/g,     loword)
+          .replace(/#{hiword}/g,     hiword)
+          .replace(/#{daword}/g,     daword)
+          .replace(/#{splurtries}/g, splur(tries, "guess", "guesses"))
 }
 
 // -----------------------------------------------------------------------------
@@ -70,44 +70,71 @@ for (const w of wordlist) {
 
 lexireset()
 
-const app = new App({
-  token:         process.env.SLACK_BOT_TOKEN,
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
+const app = new App({ token:         process.env.SLACK_BOT_TOKEN,
+                      signingSecret: process.env.SLACK_SIGNING_SECRET,
 })
 
 // -----------------------------------------------------------------------------
 // ---------------------------------- Blurbs -----------------------------------
 
-function introblurb(x) {
-  return `Hi! I'm the Lexiguess bot. I just woke up and remember exactly nothing about anything we may have talked about in the past. :blush: But I've thought of a (new) word if you want to try guessing it. It'll be so fun! I picked it from a bunch of words @dreev gave me. I'm assuming you typed "*${x}*" as your guess, so, here we go! Wheeee! :checkered_flag:\n\n`
-}
+const introblurb = `\
+Hi! I'm the Lexiguess bot. \
+I just woke up and remember exactly nothing about anything we may have talked \
+about in the past. :blush: \
+But I've thought of a (new) word if you want to try guessing it. \
+It'll be so fun! \
+I picked it from a bunch of words @dreev gave me. \
+I'm assuming you typed "*#{tug}*" as your guess, so, here we go! \
+Wheeee! :checkered_flag:\n\n`
 
-function againblurb(x) {
-  return `Hello, McFly, you already guessed "${x}". (Ok, I'm shutting up about any repeats now :shushing_face:)`
-}
+const againblurb = `\
+Hello, McFly, you already guessed "#{tug}". (Ok, I'm shutting up about any repeats now :shushing_face:)`
 
-function knownblurb(x) {
-  return `I am profoundly ashamed to admit I don’t know the word "${x}"! (Due to the aforementioned shame, I won't say this again :flushed:)`
-}
+const knownblurb = `
+I am profoundly ashamed to admit I don’t know the word "#{tug}"! \
+(Due to the aforementioned shame, I won't say this again :flushed:)`
 
-function rangeblurb(x, loword, hiword) {
-  return `Ahem, "${x}" is not between "${loword}" and "${hiword}" in the dictionary! From now on you'll get the silent treatment when that happens. (I mean, not to be a jerk about it, it's more that I'm assuming you're talking about other things and don't want me chiming in unless you're actually guessing in-bounds words. :shushing_face:)`
-}
+const rangeblurb = `\
+Ahem, "#{tug}" is not between "#{loword}" and "#{hiword}" in the dictionary! \
+From now on you'll get the silent treatment when that happens. \
+(I mean, not to be a jerk about it, it's more that I'm assuming you're talking \
+about other things and don't want me chiming in unless you're actually \
+guessing in-bounds words. :shushing_face:)`
 
-function gloryblurb(x, tries) {
-  return `OMG YES, how did you know I was thinking of "${x}"! `
-    +`[_stamps on floor and falls through_] `
-    +`It took you ${splur(tries, "guess", "guesses")}... `
-    +`[_voice fades into abyss_] :hole:`
-}
+const gloryblurb = `\
+OMG YES, how did you know I was thinking of "#{tug}"! \
+[_stamps on floor and falls through_] \
+It took you #{splurtries}... \
+[_voice fades into abyss_] :hole:`
 
-function guessblurb(tries, loword, hiword) {
-  return `(${tries}) My word is between "${loword}" and "${hiword}"!`
-}
+const guessblurb = `(#{tries}) My word is between "#{loword}" and "#{hiword}"!`
 
 /*
-
+1st guess, unknown word, repeat, immediate dup, intro/known/range/again flags
 1st unk oor rep dup inf knf raf agf
+--- --- --- --- --- --- --- --- ---
+                  1                  same thing twice in a row: ignore
+  0                   0              error: introflag never set
+  1                   1              error: introflag set prematurely
+  1   0   0   0       0              normal 1st guess
+  1           1       0              error: can't be a repeat; it's the 1st msg!
+  1       1           0              error: 1st guess out of range
+  1   1               0              1st guess is an unknown word
+  0   0   0   0       1              totally normal guess case
+  0   0   0   1       1           0  hello mcfly, you already guessed that
+  0   0   0   1       1              ignore (hello mcfly)
+  0   0   1   0       1       0      ahem, out of range
+  0   0   1   0       1              ignore (ahem, out of range)
+  0   0   1   1       1       0   0  out of range AND a repeat
+  0   0   1   1       1              ignore
+  0   1   0   0       1   0          uknown word
+  0   1   0   0       1              ignore
+  0   1   0   1       1   0       0  uknown word AND a repeat
+  0   1   0   1       1              ignore
+  0   1   1   0       1   0   0      uknown and out of range
+  0   1   1   0       1              ignore
+  0   1   1   1       1   0   0   0  unknown AND out of range AND a repeat
+  0   1   1   1       1              ignore
 */
 
 // -----------------------------------------------------------------------------
@@ -124,10 +151,11 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   console.log(`(${splur(tries, "previous guess", 
                                "previous guesses")}) new guess: "${tug}"`)
  
+  
   if (ghash[tug]) {                // already guessed x
     if (!againflag) {
       againflag = true
-      await say(againblurb(tug))
+      await say(macsub(againblurb))
     }
     return                         // ignore it
   } else {
@@ -135,10 +163,8 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   }
 
   if (!(tug in dict) && !introflag) { // off the bat with unknown word
-    await say(introblurb(tug) 
-              + `um... _uh oh_\n\n` 
-              + knownblurb(tug)
-              + `\n\n` + guessblurb(tries, loword, hiword))
+    await say(macsub(
+      `${introblurb}um... _uh oh_\n\n${knownblurb}\n\n${guessblurb}`))
     knownflag = true
     introflag = true
     return                         // ignore it
@@ -147,7 +173,7 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   if (tug <= loword || tug >= hiword) { // out of range
     if (!rangeflag) {
       rangeflag = true
-      await say(rangeblurb(tug, loword, hiword))
+      await say(macsub(rangeblurb))
     }
     return                         // ignore it
   }
@@ -155,14 +181,14 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   if (!(tug in dict)) {              // unknown word
     if (!knownflag) {
       knownflag = true
-      await say(knownblurb(tug))
+      await say(macsub(knownblurb))
     }
     return                         // ignore it
   }
   
   tries++           // if we made it this far then tug is actually a legit guess
   if (tug === daword) { 
-    await say(gloryblurb(tug, tries))
+    await say(macsub(gloryblurb))
     console.log(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)
     lexireset()                   // just wipe our memory and be ready to repeat
     return
@@ -170,9 +196,9 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
   if (!introflag) {
     introflag = true
-    await say(introblurb(tug) + guessblurb(tries, loword, hiword))
+    await say(macsub(introblurb + guessblurb))
   } else {
-    await say(guessblurb(tries, loword, hiword))
+    await say(macsub(guessblurb))
   }
 })
 
