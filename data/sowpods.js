@@ -22,6 +22,7 @@ exports.wordlist = [
 'autocancels',
 'autocancelling',
 'autocancelled',
+'datapoints',
 
 // other words the bot ought to know
 'abustle',

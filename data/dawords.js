@@ -22,8 +22,8 @@ exports.posswords = [
 //'glister',
 //'orison',
 //'arch',
-'plinth',
-'palanquin',
+//'plinth',
+//'palanquin',
 
 // words I didn't know but kinda count as technical terms
 //'merrow',
@@ -31,11 +31,21 @@ exports.posswords = [
 //'mantlet',
 //'carcanet',
 
+// words that might be a bit much even for me
+'goodhart',
+'asyndeton',
+'apophasis',
+'apotheosis',
+'zeugma',
+'synecdoche',
+
 // words related to akratic behavior
 'impulsive',
 'hotheaded',
 'myopic',
 'sybaritic',
+'languor',
+'lassitude',
 // more below in the beeminder-adjacent section to move here
 
 // words google defines wrong
@@ -100,7 +110,6 @@ exports.posswords = [
 // beeminder-adjacent words
 'centerline',
 'datapoint',
-'datapoints',
 'derail',
 'dial',
 'eep',
@@ -126,7 +135,7 @@ exports.posswords = [
 'bunny',
 'yellow',
 'brick',
-'flexible',
+//'flexible',
 'odyssean',
 'damoclean',
 'mindful',
@@ -139,7 +148,7 @@ exports.posswords = [
 'deliberate',
 'optimization',
 'minding',
-'weight',
+//'weight',
 'monastery',
 'czar',
 'consequences',
@@ -195,10 +204,8 @@ exports.posswords = [
 'eking',
 'dun',
 'weaselly',
-'device',
+//'device',
 'overachiever',
-'languor',
-'lassitude',
 
 // beeminder autodata integration partners and related apps
 'ifttt',
@@ -311,10 +318,6 @@ exports.posswords = [
 'hashtag',
 'quantum',
 'hacker',
-'goodhart',
-'asyndeton',
-'apophasis',
-'apotheosis',
 'factitious',
 'desultory',
 'retronym',
@@ -327,8 +330,6 @@ exports.posswords = [
 'shibboleth',
 'lexicographic',
 'reseminate',
-'zeugma',
-'synecdoche',
 'metathesis',
 'elision',
 'portmanteau',
@@ -416,6 +417,8 @@ exports.posswords = [
 'poncy',
 'conjecture',
 'supererogatory',
+'lexicality',
+'apostasy',
 
 ]
 
