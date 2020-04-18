@@ -14,7 +14,7 @@ exports.posswords = [
 'kvetch',
 'auction',
 'bid',
-'credit',
+//'credit',
 //'flakeproof',
 
 // words I didn't know from priory of the orange tree
@@ -91,7 +91,6 @@ exports.posswords = [
 'smarmbot',
 'tagtime',
 'autocancel',
-'autocanceled',  
 'gissue',
 'antimagic',
 'beebrain',
@@ -396,7 +395,7 @@ exports.posswords = [
 'antediluvian',
 'idiolect',
 'pecuniary',
-'dilittante',
+'dilettante',
 'polymath',
 'pzazz',
 'nom',
@@ -411,6 +410,12 @@ exports.posswords = [
 'postulate',
 'prorogue',
 'propitiate',
+'superfluity',
+'pyrrhic',
+'autological',
+'poncy',
+'conjecture',
+'supererogatory',
 
 ]
 
