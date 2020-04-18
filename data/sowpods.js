@@ -17,9 +17,17 @@ exports.wordlist = [
 'precommits',
 'precommitted',
 'precommitting',
+'autocanceled',  
+'autocanceling',
+'autocancels',
+'autocancelling',
+'autocancelled',
 
 // other words the bot ought to know
 'abustle',
+'stigmergy',
+'heterological',
+'phantasmagorical',
 
 'aa',
 'aah',

@@ -110,6 +110,7 @@ From now on you'll get the silent treatment when that happens. \
 about other things and don't want me chiming in unless you're actually \
 guessing in-bounds words. :shushing_face:)`
 
+// This one is unreachable?
 const rangeagainblurb = `\
 Hello, McFly, you already guessed "#{tug}" -- and it's not between \
 "#{loword}" and "#{hiword}" anyway. (Ok, I'm shutting up about any repeats or \
@@ -133,9 +134,9 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
     console.log(`DUP "${tug}"`)    // (happens sometimes due to network flakage;
     return                         // if user did it, fine to ignore that too)
   } else { prevstring = tug }
-  tug = tug.toLowerCase()          // canonicalized word the user guessed
   console.log(`(${splur(tries, "previous guess", 
                                "previous guesses")}) new guess: "${tug}"`)
+  tug = tug.toLowerCase().trim()   // canonicalized word the user guessed
  
   const unk = !(tug in dict)                   // unknown word
   const oor = tug <= loword || tug >= hiword   // out of range
