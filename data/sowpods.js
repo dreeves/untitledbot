@@ -22,13 +22,19 @@ exports.wordlist = [
 'autocancels',
 'autocancelling',
 'autocancelled',
+'datapoints',
+'pomodoros',
+'workerbee',
+
 
 // other words the bot ought to know
 'abustle',
 'stigmergy',
 'heterological',
 'phantasmagorical',
+'gorbellied',
 
+// original SOWPODS
 'aa',
 'aah',
 'aahed',
