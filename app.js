@@ -133,6 +133,12 @@ const guessblurb = `(#{tries}) My word is between "#{loword}" and "#{hiword}"!`
 
 // Someone says a single strictly alphabetic word in a channel our bot is in
 app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
+  if (!context.matches) {
+    await say `\
+Eek! Weird bug! Diagnostics:
+${JSON.stringify(context)}`
+    return
+  }
   tug = context.matches[0]         // exact string the user guessed
   if (tug === prevstring) {        // exact same thing twice in a row: ignore it
     console.log(`DUP "${tug}"`)    // (happens sometimes due to network flakage;
@@ -147,19 +153,7 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   const rep = ghash[tug]                       // repeated guess
   ghash[tug] = true                            // remember that user guessed tug
 
-  if        (!introflag && rep) {              // an airhorn would be nice here
-    await say(`ERROR: First guess was somehow a repeat? This can't happen!`)
-  } else if (!introflag && unk) {              // unknown word off the bat
-    await say(mex(introsnarkblurb + guessblurb))
-    introflag = true
-    snarkflag = true
-  } else if (!introflag && oor) {            // out of range off the bat: just
-    tries++                                  // expand the range and run with it
-    if      (tug < loword) { loword = tug }
-    else if (tug > hiword) { hiword = tug }
-    await say(mex(introblurb + guessblurb))
-    introflag = true
-  } else if (!introflag) {
+  if (!introflag && !unk && !oor && !rep) {  // 1st guess is a-ok
     tries++
     if (tug === daword) { 
       await say(mex(introblurb + gloryblurb + `\n\n(presumably you cheated?)`))
@@ -169,8 +163,8 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
       if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
       await say(mex(introblurb + guessblurb))
       introflag = true
-    }
-  } else if (!unk && !oor && !rep) {
+    } 
+  } else if (!unk && !oor && !rep) {         // super common case: another guess
     tries++
     if (tug === daword) { 
       await say(mex(tries < 18.1 ? gloryblurb : gotitblurb))
@@ -179,43 +173,56 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
     } else {
       if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
       await say(mex(guessblurb))
-    }    
-  } else if (!unk && !oor && rep && !againflag) {
+    }
+  } else if (!introflag && unk) {            // unknown word off the bat
+    await say(mex(introsnarkblurb + guessblurb))
+    introflag = true
+    snarkflag = true
+  } else if (!introflag && oor) {            // out of range off the bat: just
+    tries++                                  // expand the range and run with it
+    if      (tug < loword) { loword = tug }
+    else if (tug > hiword) { hiword = tug }
+    await say(mex(introblurb + guessblurb))
+    introflag = true
+  } else if (!introflag && rep) {            // an airhorn would be nice here
+    await say(`ERROR: First guess was somehow a repeat? This can't happen!`)
+  } else if (!unk && !oor && rep && !againflag) {         // 1 thing wrong (001)
     await say(mex(againblurb))
     againflag = true
-  } else if (!unk && !oor && rep) {
-    // repeated guess but we already gave the spiel so ignore it
-  } else if (!unk && oor && !rep && !rangeflag) {
+  } else if (!unk && oor && !rep && !rangeflag) {         // 1 thing wrong (010)
     await say(mex(rangeblurb))
     rangeflag = true
-  } else if (!unk && oor && !rep) {
-    // out of range but we already gave the spiel so ignore it
-  } else if (!unk && oor && rep && !rangeflag && !againflag) {
+  } else if (unk && !oor && !rep && !snarkflag) {         // 1 thing wrong (100)
+    await say(mex(snarkblurb))
+    snarkflag = true    
+  } else if (!unk && oor && rep && !rangeflag && !againflag) { // 2 things (011)
     await say(mex(rangeagainblurb))
     rangeflag = true
     againflag = true
-  } else if (!unk && oor && rep) {
-    // repeated guess & out of range but we've given one of those spiels so shhh
-  } else if (unk && !oor && !rep && !snarkflag) {
-    await say(mex(snarkblurb))
-    snarkflag = true
-  } else if (unk && !oor && !rep) {
-    // unknown word but we've given the spiel so shush
-  } else if (unk && !oor && rep && !snarkflag && !againflag) {
-    await say(`ERROR: 
-      You're repeating an unknown word so we must've snarked at you already`)
-  } else if (unk && !oor && rep) {
-    // Reguessing an unknown word so we'll have complained already so ignore it
-  } else if (unk && oor && !rep && !snarkflag && !rangeflag) {
+  } else if (unk && oor && !rep && !snarkflag && !rangeflag) { // 2 things (110)
     await say(mex(snarkrangeblurb))
     snarkflag = true
     rangeflag = true
-  } else if (unk && oor && !rep) {
-    // An unknown, out of range word but we've given one of those spiels so shhh
-  } else if (unk && oor && rep && !snarkflag && !rangeflag && !againflag) {
-    await say(`ERROR: this definitely can't happen! [eats hat]`)
-  } else {
-    await say(`DEBUG: definitely tell @dreev if you see this`)
+  } else if (unk && !oor && rep && !snarkflag && !againflag) { // 2 things (101)
+    await say(`ERROR! Hat-eating commences. Please tell @dreev about this.
+You repeated the unknown word "${tug}" yet we didn't already snark at you?!`)
+  } else if (unk && snarkflag || oor && rangeflag || rep && againflag) {
+    // Whatever's wrong, we've already given that spiel so ignore it
+  } else { // Reasonably sure these error cases can't ever happen!
+    await say(`\
+ERROR! Eek! You have found a bug! Please tell @dreev! Diagnostics:
+Original string: ${context.matches[0]}
+Previous string: ${prevstring}
+Canonicalized to: ${tug}
+Range: ${loword} [${daword}] ${hiword}
+Tries: ${tries}
+Unknown word: ${unk}
+Out of range: ${oor}
+Repeated guess: ${rep}
+Previously introduced self: ${introflag}
+Previously snarked about non-dictionary words: ${snarkflag}
+Previously complained about word out of range: ${rangeflag}
+Previously said we wouldn't admonish user about repeats: ${againflag}`)
   }
 })
 

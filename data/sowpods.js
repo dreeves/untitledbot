@@ -33,6 +33,8 @@ exports.wordlist = [
 'heterological',
 'phantasmagorical',
 'gorbellied',
+'mondegreen',
+'cohabitate',
 
 // original SOWPODS
 'aa',

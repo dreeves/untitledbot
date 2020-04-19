@@ -14,6 +14,7 @@ exports.posswords = [
 'lupine',
 'lachrymose',
 'metonym',
+'eggcorn',
 
 'skive',
 'kvetch',
