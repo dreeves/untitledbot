@@ -122,6 +122,10 @@ OMG YES, how did you know I was thinking of "#{tug}"! \
 It took you #{splurtries}... \
 [_voice fades into abyss_] :hole:`
 
+const gotitblurb = `\
+:tada: Yup, my word was "#{tug}"! \
+It took you #{splurtries}. :tada:`
+
 const guessblurb = `(#{tries}) My word is between "#{loword}" and "#{hiword}"!`
 
 // -----------------------------------------------------------------------------
@@ -169,7 +173,7 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
   } else if (!unk && !oor && !rep) {
     tries++
     if (tug === daword) { 
-      await say(mex(gloryblurb))
+      await say(mex(tries < 18.1 ? gloryblurb : gotitblurb))
       console.log(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)
       lexireset()                 // just wipe our memory and be ready to repeat
     } else {

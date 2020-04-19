@@ -1,6 +1,6 @@
 {
   "name": "lexiguess",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A dictionary guessing game based on a basic template to spin up a Bolt app for Slack",
   "main": "app.js",
   "scripts": {

@@ -10,6 +10,11 @@
 exports.posswords = [
 
 // unsorted so far
+'gissue',
+'lupine',
+'lachrymose',
+'metonym',
+
 'skive',
 'kvetch',
 'auction',
@@ -32,7 +37,7 @@ exports.posswords = [
 //'carcanet',
 
 // words that might be a bit much even for me
-'goodhart',
+//'goodhart',
 'asyndeton',
 'apophasis',
 'apotheosis',
@@ -194,7 +199,6 @@ exports.posswords = [
 'tock',
 'tocks',
 'pomodoro',
-'pomodoros',
 'accountability',
 'measurable',
 'quantified',
@@ -246,12 +250,10 @@ exports.posswords = [
 'apian',
 'beeline',
 'sting',
-'workerbee',
 'workerbees',
 'drone',
 'beekeeper',
 'beekeeping',
-'bees',
 'beeswax',
 'honey',
 'bombinate',
