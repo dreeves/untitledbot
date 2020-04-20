@@ -1,18 +1,19 @@
-console.log("Lexiguess initialization...")
+const CLOG = console.log
+
+CLOG("Lexiguess initialization...")
 const { App } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
-console.log("Bolt package loaded, fetching wordlist...")
-// make sure wordlist only has words between 'aardvark' and 'zymurgy'
-let   wordlist  = require('./data/sowpods.js').wordlist
+CLOG("Bolt package loaded, fetching wordlist...")
+let   wordlist = require('./data/sowpods.js').wordlist
 const dictsize = wordlist.length
 const posswords = require('./data/dawords.js').posswords
 wordlist = wordlist.concat(posswords)
-wordlist = [...new Set(wordlist)]
+wordlist = [...new Set(wordlist)] // uniquify
 wordlist.sort()
-const d = dictsize         // original dict size (from aardvark to zymurgy)
-const p = posswords.length // number of possible words to pick for the game
-const w = wordlist.length  // size of the augmented dictionary
-const n = w-d              // number of neologisms in the possible words list
-console.log(`Dict: ${d}, Possible words: ${p}, Neologisms: ${n}, Total: ${w}`)
+const d = dictsize            // original dict size
+const p = posswords.length    // number of possible words to pick for the game
+const w = wordlist.length     // size of the augmented dictionary
+const n = w-d                 // number of neologisms in the possible words list
+CLOG(`Dict: ${d}, Possible words: ${p}, Neologisms: ${n}, Total: ${w}`)
 
 let tug               // the user's guess
 let tries             // how many tries it takes to guess
@@ -25,7 +26,7 @@ let rangeflag         // whether the bot's said it ignores out-of-range words
 let againflag         // whether the bot's said it ignores already guessed words
 //let multiflag       // whether the bot's said it ignores multiword messages
 let ghash             // things the user already guessed
-let prevstring = "magic_string_no_user_will_ever_type_1547"
+let prevstring = "magic_string_no_user_will_ever_type_so_wont_match_off_bat_547"
 
 // -----------------------------------------------------------------------------
 // --------------------------------- Functions ---------------------------------
@@ -45,7 +46,7 @@ function lexireset() {
   rangeflag = false
   againflag = false
   ghash = {}
-  console.log(`We've thought of our word (shhhhh, it's "${daword}")`)
+  CLOG(`We've thought of our word (shhhhh, it's "${daword}")`)
 }
 
 // Macro-expand the given blurb, Ruby string interpolation style
@@ -65,7 +66,7 @@ let dict = {}
 let i = 0
 for (const w of wordlist) { 
   if (/[a-z]+/.test(w)) { dict[w] = i++ }
-  else { console.log(`ERROR IN DICT: ${w}`) }
+  else { CLOG(`ERROR IN DICT: ${w}`) }
 }
 
 lexireset()
@@ -133,19 +134,13 @@ const guessblurb = `(#{tries}) My word is between "#{loword}" and "#{hiword}"!`
 
 // Someone says a single strictly alphabetic word in a channel our bot is in
 app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
-  if (!context.matches) {
-    await say `\
-Eek! Weird bug! Diagnostics:
-${JSON.stringify(context)}`
-    return
-  }
   tug = context.matches[0]         // exact string the user guessed
   if (tug === prevstring) {        // exact same thing twice in a row: ignore it
-    console.log(`DUP "${tug}"`)    // (happens sometimes due to network flakage;
+    CLOG(`DUP "${tug}"`)           // (happens sometimes due to network flakage;
     return                         // if user did it, fine to ignore that too)
   } else { prevstring = tug }
-  console.log(`(${splur(tries, "previous guess", 
-                               "previous guesses")}) new guess: "${tug}"`)
+  CLOG(`(${splur(tries, "previous guess", 
+                        "previous guesses")}) new guess: "${tug}"`)
   tug = tug.toLowerCase().trim()   // canonicalized word the user guessed
  
   const unk = !(tug in dict)                   // unknown word
@@ -153,38 +148,33 @@ ${JSON.stringify(context)}`
   const rep = ghash[tug]                       // repeated guess
   ghash[tug] = true                            // remember that user guessed tug
 
-  if (!introflag && !unk && !oor && !rep) {  // 1st guess is a-ok
+  if (!unk && !oor && !rep) {                  // fully valid guess
     tries++
-    if (tug === daword) { 
-      await say(mex(introblurb + gloryblurb + `\n\n(presumably you cheated?)`))
-      console.log(`INSTAGUESSED ("${tug}") in ${splur(tries, "try", "tries")}!`)
+    if (tug === daword) {
+      if (!introflag) {
+        await say(mex(introblurb + gloryblurb + `\n\n(seriously, 1 guess?)`))
+        CLOG(`INSTAGUESSED ("${tug}") in ${tries} try")}!`)
+      } else {
+        await say(mex(tries < 18.1 ? gloryblurb : gotitblurb))
+        CLOG(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)    
+      }
       lexireset()                 // just wipe our memory and be ready to repeat
-    } else {
+    } else {                      // shrink the range and reply
       if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
-      await say(mex(introblurb + guessblurb))
+      await say(mex((introflag ? '' : introblurb) + guessblurb))
       introflag = true
-    } 
-  } else if (!unk && !oor && !rep) {         // super common case: another guess
-    tries++
-    if (tug === daword) { 
-      await say(mex(tries < 18.1 ? gloryblurb : gotitblurb))
-      console.log(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)
-      lexireset()                 // just wipe our memory and be ready to repeat
-    } else {
-      if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
-      await say(mex(guessblurb))
     }
-  } else if (!introflag && unk) {            // unknown word off the bat
+  } else if (unk && !introflag) {            // unknown word off the bat
     await say(mex(introsnarkblurb + guessblurb))
     introflag = true
     snarkflag = true
-  } else if (!introflag && oor) {            // out of range off the bat: just
+  } else if (oor && !introflag) {            // out of range off the bat: just
     tries++                                  // expand the range and run with it
     if      (tug < loword) { loword = tug }
     else if (tug > hiword) { hiword = tug }
     await say(mex(introblurb + guessblurb))
     introflag = true
-  } else if (!introflag && rep) {            // an airhorn would be nice here
+  } else if (rep && !introflag) {            // an airhorn would be nice here
     await say(`ERROR: First guess was somehow a repeat? This can't happen!`)
   } else if (!unk && !oor && rep && !againflag) {         // 1 thing wrong (001)
     await say(mex(againblurb))
@@ -230,7 +220,7 @@ Previously said we wouldn't admonish user about repeats: ${againflag}`)
 // Someone clicks on the Home tab of our app; render the page
 app.event('app_home_opened', async ({event, context}) => {
   try {
-    console.log(`app_home_opend: ${event.user}`)
+    CLOG(`app_home_opend: ${event.user}`)
     // view.publish is the method to push a view to the Home tab
     const result = await app.client.views.publish({
       token: context.botToken,
@@ -242,17 +232,18 @@ app.event('app_home_opened', async ({event, context}) => {
           { "type": "section",
             "text": {
               "type": "mrkdwn",
-              "text": "Welcome to Lexiguess :tada: :books:",
+              "text": "Welcome to Lexiguess :books:",
             }
           },
           { "type": "divider" },
           { "type": "section",
             "text": {
               "type": "mrkdwn",
-              "text": "Just a silly weekend project by dreev. "
-                +"Instructions: The bot totally ignores anything that isn't a "
-                +"single word. That's really all you need to know. Everything "
-                +"else should be self-explanatory.",
+              "text": `\
+Instructions: The bot totally ignores anything that isn't a single word \
+(at least 2 letters, no punctuation). \
+That's really all you need to know. \
+Everything else should be self-explanatory.`,
             }
           },
 /*
@@ -283,7 +274,7 @@ app.event('app_home_opened', async ({event, context}) => {
 
 ;(async () => { 
   await app.start(process.env.PORT || 3000)
-  console.log('Lexiguess app is running')
+  CLOG('Lexiguess app is running')
 })()
 
 
