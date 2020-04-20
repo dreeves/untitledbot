@@ -271,12 +271,16 @@ Everything else should be self-explanatory.`,
   catch (error) { console.error(error) }
 })
 
+// -----------------------------------------------------------------------------
+// ----------------------------- Start the server ------------------------------
 
 ;(async () => { 
   await app.start(process.env.PORT || 3000)
   CLOG('Lexiguess app is running')
 })()
 
+// -----------------------------------------------------------------------------
+// ------------------------------- Scratch area --------------------------------
 
 /* #SCHDEL
 1st guess, unknown word, repeat, immediate dup, intro/snark/range/again flags
