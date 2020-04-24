@@ -422,6 +422,7 @@ exports.posswords = [
 'supererogatory',
 'lexicality',
 'apostasy',
+'argot',
 
 ]
 
