@@ -15,6 +15,7 @@ const w = wordlist.length     // size of the augmented dictionary
 const n = w-d                 // number of neologisms in the possible words list
 CLOG(`Dict: ${d}, Possible words: ${p}, Neologisms: ${n}, Total: ${w}`)
 
+let gametype          // which game to play, lexiguess or buddha nature
 let tug               // the user's guess
 let tries             // how many tries it takes to guess
 let loword            // earliest word in the dictionary it could be
@@ -129,15 +130,14 @@ It took you #{splurtries}. :tada:`
 
 const guessblurb = `(#{tries}) My word is between "#{loword}" and "#{hiword}"!`
 
-// -----------------------------------------------------------------------------
-// ------------------------------ Event Handlers -------------------------------
-
-// Someone says a single strictly alphabetic word in a channel our bot is in
-app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
-  tug = context.matches[0]         // exact string the user guessed
+// Take the string that the user typed and return the bot's response
+function lexiguess(ss) {
+  CLOG(`LEXIGUESS FUNCTION CALLED WITH "${ss}"`)
+  tug = ss
+  let out
   if (tug === prevstring) {        // exact same thing twice in a row: ignore it
     CLOG(`DUP "${tug}"`)           // (happens sometimes due to network flakage;
-    return                         // if user did it, fine to ignore that too)
+    return null                    // if user did it, fine to ignore that too)
   } else { prevstring = tug }
   CLOG(`(${splur(tries, "previous guess", 
                         "previous guesses")}) new guess: "${tug}"`)
@@ -152,56 +152,62 @@ app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
     tries++
     if (tug === daword) {
       if (!introflag) {
-        await say(mex(introblurb + gloryblurb + `\n\n(seriously, 1 guess?)`))
-        CLOG(`INSTAGUESSED ("${tug}") in ${tries} try")}!`)
+        CLOG(`INSTAGUESSED "${tug}" in ${tries} try!`)
+        out = mex(introblurb + gloryblurb + `\n\n(seriously, 1 guess?)`)
       } else {
-        await say(mex(tries < 18.1 ? gloryblurb : gotitblurb))
-        CLOG(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)    
+        CLOG(`Guessed it ("${tug}") in ${splur(tries, "try", "tries")}!`)
+        out = mex(tries < 18.1 ? gloryblurb : gotitblurb)
       }
       lexireset()                 // just wipe our memory and be ready to repeat
+      return out
     } else {                      // shrink the range and reply
       if (dict[tug] < dict[daword]) { loword = tug } else { hiword = tug }
-      await say(mex((introflag ? '' : introblurb) + guessblurb))
-      introflag = true
+      if (introflag){
+        return mex(guessblurb)
+      } else {
+        introflag = true
+        return mex(introblurb + guessblurb)        
+      }
     }
   } else if (unk && !introflag) {            // unknown word off the bat
-    await say(mex(introsnarkblurb + guessblurb))
     introflag = true
     snarkflag = true
+    return mex(introsnarkblurb + guessblurb)
   } else if (oor && !introflag) {            // out of range off the bat: just
     tries++                                  // expand the range and run with it
     if      (tug < loword) { loword = tug }
     else if (tug > hiword) { hiword = tug }
-    await say(mex(introblurb + guessblurb))
     introflag = true
+    return mex(introblurb + guessblurb)
   } else if (rep && !introflag) {            // an airhorn would be nice here
-    await say(`ERROR: First guess was somehow a repeat? This can't happen!`)
+    return `ERROR: First guess was somehow a repeat? This can't happen!`
   } else if (!unk && !oor && rep && !againflag) {         // 1 thing wrong (001)
-    await say(mex(againblurb))
     againflag = true
+    return mex(againblurb)
   } else if (!unk && oor && !rep && !rangeflag) {         // 1 thing wrong (010)
-    await say(mex(rangeblurb))
     rangeflag = true
+    return mex(rangeblurb)
   } else if (unk && !oor && !rep && !snarkflag) {         // 1 thing wrong (100)
-    await say(mex(snarkblurb))
     snarkflag = true    
+    return mex(snarkblurb)
   } else if (!unk && oor && rep && !rangeflag && !againflag) { // 2 things (011)
-    await say(mex(rangeagainblurb))
     rangeflag = true
     againflag = true
+    return mex(rangeagainblurb)
   } else if (unk && oor && !rep && !snarkflag && !rangeflag) { // 2 things (110)
-    await say(mex(snarkrangeblurb))
     snarkflag = true
     rangeflag = true
+    return mex(snarkrangeblurb)
   } else if (unk && !oor && rep && !snarkflag && !againflag) { // 2 things (101)
-    await say(`ERROR! Hat-eating commences. Please tell @dreev about this.
-You repeated the unknown word "${tug}" yet we didn't already snark at you?!`)
+    return `ERROR! Hat-eating commences. Please tell @dreev about this.
+You repeated the unknown word "${tug}" yet we didn't already snark at you?!`
   } else if (unk && snarkflag || oor && rangeflag || rep && againflag) {
-    // Whatever's wrong, we've already given that spiel so ignore it
-  } else { // Reasonably sure these error cases can't ever happen!
-    await say(`\
+    return null // Whatever's wrong, we've already given that spiel so ignore it
+  }
+  // Reasonably we can't reach this point in the code...
+  return `\
 ERROR! Eek! You have found a bug! Please tell @dreev! Diagnostics:
-Original string: ${context.matches[0]}
+Original string: ${ss}
 Previous string: ${prevstring}
 Canonicalized to: ${tug}
 Range: ${loword} [${daword}] ${hiword}
@@ -212,10 +218,17 @@ Repeated guess: ${rep}
 Previously introduced self: ${introflag}
 Previously snarked about non-dictionary words: ${snarkflag}
 Previously complained about word out of range: ${rangeflag}
-Previously said we wouldn't admonish user about repeats: ${againflag}`)
-  }
-})
+Previously said we wouldn't admonish user about repeats: ${againflag}`
+}
 
+// -----------------------------------------------------------------------------
+// ------------------------------ Event Handlers -------------------------------
+
+// Someone says a single strictly alphabetic word in a channel our bot is in
+app.message(/^\s*([a-z]{2,})\s*$/i, async ({ context, say }) => {
+  const l = lexiguess(context.matches[0])
+  if (l !== null) await say(l)
+})
 
 // Someone clicks on the Home tab of our app; render the page
 app.event('app_home_opened', async ({event, context}) => {
