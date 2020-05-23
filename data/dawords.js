@@ -10,6 +10,8 @@
 exports.posswords = [
 
 // unsorted so far
+'lexeme',
+'turpitude',
 'gissue',
 'lupine',
 'lachrymose',
