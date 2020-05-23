@@ -27,7 +27,7 @@ let rangeflag         // whether the bot's said it ignores out-of-range words
 let againflag         // whether the bot's said it ignores already guessed words
 //let multiflag       // whether the bot's said it ignores multiword messages
 let ghash             // things the user already guessed
-let prevstring = "magic_string_no_user_will_ever_type_so_wont_match_off_bat_547"
+let prevstring        // exact string user previously typed, for dup detection
 
 // -----------------------------------------------------------------------------
 // --------------------------------- Functions ---------------------------------
@@ -46,6 +46,7 @@ function lexireset() {
   snarkflag = false 
   rangeflag = false
   againflag = false
+  prevstring = "magic_string_no_user_will_ever_type_so_wont_match_off_bat_547"
   ghash = {}
   CLOG(`We've thought of our word (shhhhh, it's "${daword}")`)
 }
@@ -130,11 +131,12 @@ It took you #{splurtries}. :tada:`
 
 const guessblurb = `(#{tries}) My word is between "#{loword}" and "#{hiword}"!`
 
+// -----------------------------------------------------------------------------
+// -------------------------- Main Lexiguess Function --------------------------
+
 // Take the string that the user typed and return the bot's response
-function lexiguess(ss) {
-  CLOG(`LEXIGUESS FUNCTION CALLED WITH "${ss}"`)
-  tug = ss
-  let out
+function lexiguess(x) {
+  tug = x
   if (tug === prevstring) {        // exact same thing twice in a row: ignore it
     CLOG(`DUP "${tug}"`)           // (happens sometimes due to network flakage;
     return null                    // if user did it, fine to ignore that too)
@@ -151,6 +153,7 @@ function lexiguess(ss) {
   if (!unk && !oor && !rep) {                  // fully valid guess
     tries++
     if (tug === daword) {
+      let out
       if (!introflag) {
         CLOG(`INSTAGUESSED "${tug}" in ${tries} try!`)
         out = mex(introblurb + gloryblurb + `\n\n(seriously, 1 guess?)`)
@@ -204,10 +207,10 @@ You repeated the unknown word "${tug}" yet we didn't already snark at you?!`
   } else if (unk && snarkflag || oor && rangeflag || rep && againflag) {
     return null // Whatever's wrong, we've already given that spiel so ignore it
   }
-  // Reasonably we can't reach this point in the code...
+  // Reasonably sure we can't reach this point in the code...
   return `\
 ERROR! Eek! You have found a bug! Please tell @dreev! Diagnostics:
-Original string: ${ss}
+Original string: ${x}
 Previous string: ${prevstring}
 Canonicalized to: ${tug}
 Range: ${loword} [${daword}] ${hiword}

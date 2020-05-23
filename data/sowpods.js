@@ -25,9 +25,18 @@ exports.wordlist = [
 'datapoints',
 'pomodoros',
 'workerbee',
+'autoratcheting',
+'autoratchets',
+'autoratcheted',
+'weaselproofing',
+'weaselproofed',
+'weaselproofs',
 
 
 // other words the bot ought to know
+'lexiguess',
+'lexibot',
+'yootle',
 'abustle',
 'stigmergy',
 'heterological',
@@ -35,6 +44,14 @@ exports.wordlist = [
 'gorbellied',
 'mondegreen',
 'cohabitate',
+'luddite',
+'pebkac',
+'proctogenic',
+'jewish',
+'zen',
+'pronoia',
+'mung',
+'munge',
 
 // original SOWPODS
 'aa',
