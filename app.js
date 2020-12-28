@@ -1,7 +1,7 @@
 const CLOG = console.log
 
 CLOG("Lexiguess initialization...")
-const { App } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
+const { App, ExpressReceiver } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
 CLOG("Bolt package loaded, fetching wordlist...")
 let   wordlist = require('./data/sowpods.js').wordlist
 const dictsize = wordlist.length
@@ -73,8 +73,9 @@ for (const w of wordlist) {
 
 lexireset()
 
+const receiver = new ExpressReceiver({ signingSecret: process.env.SLACK_SIGNING_SECRET })
 const app = new App({ token:         process.env.SLACK_BOT_TOKEN,
-                      signingSecret: process.env.SLACK_SIGNING_SECRET,
+                      receiver
 })
 
 // -----------------------------------------------------------------------------
@@ -285,6 +286,13 @@ Everything else should be self-explanatory.`,
     })
   }
   catch (error) { console.error(error) }
+})
+
+// -----------------------------------------------------------------------------
+// ------------------------------- Web Interface -------------------------------
+
+receiver.router.get('/', (req, res) => {
+  res.send('Hello, world!')
 })
 
 // -----------------------------------------------------------------------------
