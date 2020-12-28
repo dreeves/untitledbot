@@ -12,3 +12,11 @@ socket.addEventListener('message', e => {
     messageLine.textContent = e.data
     messageLog.append(messageLine)
 })
+
+document.querySelector('#user-input')
+        .addEventListener('submit', e => {
+            e.preventDefault()
+            const input = document.querySelector('input[type=text]')
+            socket.send(input.value)
+            input.value = ''
+        })

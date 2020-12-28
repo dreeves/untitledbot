@@ -300,9 +300,13 @@ interface(receiver)
 
 const wsServer = new ws.Server({ noServer: true })
 wsServer.on('connection', socket => {
+  socket.send('Guess the word!')
+
   socket.on('message', message => {
-    CLOG(message)
-    socket.send('Hello, client!')
+    if (message.match(/^\s*([a-z]{2,})\s*$/i)) {
+      var l = lexiguess(message)
+      socket.send(l)
+    }
   })
 })
 
