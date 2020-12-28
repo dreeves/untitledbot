@@ -2,6 +2,7 @@ const CLOG = console.log
 
 CLOG("Lexiguess initialization...")
 const { App, ExpressReceiver } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
+const ws = require('ws')
 CLOG("Bolt package loaded, fetching wordlist...")
 let   wordlist = require('./data/sowpods.js').wordlist
 const dictsize = wordlist.length
@@ -297,8 +298,21 @@ interface(receiver)
 // -----------------------------------------------------------------------------
 // ----------------------------- Start the server ------------------------------
 
+const wsServer = new ws.Server({ noServer: true })
+wsServer.on('connection', socket => {
+  socket.on('message', message => {
+    CLOG(message)
+    socket.send('Hello, client!')
+  })
+})
+
 ;(async () => { 
-  await app.start(process.env.PORT || 3000)
+  const server = await app.start(process.env.PORT || 3000)
+  server.on('upgrade', (request, socket, head) => {
+    wsServer.handleUpgrade(request, socket, head, socket => {
+      wsServer.emit('connection', socket, request)
+    })
+  })
   CLOG('Lexiguess app is running')
 })()
 
