@@ -1,7 +1,8 @@
 const CLOG = console.log
 
 CLOG("Lexiguess initialization...")
-const { App } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
+const { App, ExpressReceiver } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
+const ws = require('ws')
 CLOG("Bolt package loaded, fetching wordlist...")
 let   wordlist = require('./data/sowpods.js').wordlist
 const dictsize = wordlist.length
@@ -73,8 +74,9 @@ for (const w of wordlist) {
 
 lexireset()
 
+const receiver = new ExpressReceiver({ signingSecret: process.env.SLACK_SIGNING_SECRET })
 const app = new App({ token:         process.env.SLACK_BOT_TOKEN,
-                      signingSecret: process.env.SLACK_SIGNING_SECRET,
+                      receiver
 })
 
 // -----------------------------------------------------------------------------
@@ -288,10 +290,33 @@ Everything else should be self-explanatory.`,
 })
 
 // -----------------------------------------------------------------------------
+// ------------------------------- Web Interface -------------------------------
+
+const interface = require('./interface')
+interface(receiver)
+
+// -----------------------------------------------------------------------------
 // ----------------------------- Start the server ------------------------------
 
+const wsServer = new ws.Server({ noServer: true })
+wsServer.on('connection', socket => {
+  socket.send('Guess the word!')
+
+  socket.on('message', message => {
+    if (message.match(/^\s*([a-z]{2,})\s*$/i)) {
+      var l = lexiguess(message)
+      socket.send(l)
+    }
+  })
+})
+
 ;(async () => { 
-  await app.start(process.env.PORT || 3000)
+  const server = await app.start(process.env.PORT || 3000)
+  server.on('upgrade', (request, socket, head) => {
+    wsServer.handleUpgrade(request, socket, head, socket => {
+      wsServer.emit('connection', socket, request)
+    })
+  })
   CLOG('Lexiguess app is running')
 })()
 
