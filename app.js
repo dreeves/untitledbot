@@ -291,9 +291,8 @@ Everything else should be self-explanatory.`,
 // -----------------------------------------------------------------------------
 // ------------------------------- Web Interface -------------------------------
 
-receiver.router.get('/', (req, res) => {
-  res.send('Hello, world!')
-})
+const interface = require('./interface')
+interface(receiver)
 
 // -----------------------------------------------------------------------------
 // ----------------------------- Start the server ------------------------------
