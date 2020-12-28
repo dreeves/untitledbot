@@ -1,5 +1,9 @@
-module.exports = function (receiver) {
-    receiver.router.get('/', (req, res) => {
+const express = require('express')
+
+module.exports = function ({ app }) {
+    app.get('/', (req, res) => {
         res.sendFile(`${__dirname}/index.html`)
     })
+
+    app.use('/static', express.static('client'))
 }
