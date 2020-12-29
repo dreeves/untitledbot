@@ -1,8 +1,11 @@
 // FIXME configure host and port
 const socket = new WebSocket('ws://localhost:3000')
+const socket = new WebSocket(`${protocol}:${window.location.hostname}:${window.location.port}`)
+const messageForm = document.querySelector('#message-form')
+const messageInput = document.querySelector('#message-input')
 
-socket.addEventListener('open', e => {
-    socket.send('Hello server!')
+socket.addEventListener('open', () => {
+    messageInput.disabled = false
 })
 
 socket.addEventListener('message', e => {
@@ -13,10 +16,9 @@ socket.addEventListener('message', e => {
     messageLog.append(messageLine)
 })
 
-document.querySelector('#user-input')
-        .addEventListener('submit', e => {
-            e.preventDefault()
-            const input = document.querySelector('input[type=text]')
-            socket.send(input.value)
-            input.value = ''
-        })
+messageForm
+    .addEventListener('submit', e => {
+        e.preventDefault()
+        socket.send(messageInput.value)
+        messageInput.value = ''
+    })
