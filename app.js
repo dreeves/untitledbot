@@ -305,9 +305,15 @@ wsServer.on('connection', socket => {
   socket.on('message', message => {
     if (message.match(/^\s*([a-z]{2,})\s*$/i)) {
       var l = lexiguess(message)
-      socket.send(l)
+      wsServer.clients.forEach(s => s.send(l))
     }
   })
+})
+
+process.on('SIGINT', () => {
+  CLOG('Shutting down!')
+  wsServer.clients.forEach(s => s.send('Server is shutting down! This is most likely a deliberate act by the admin.'))
+  process.exit()
 })
 
 ;(async () => { 
