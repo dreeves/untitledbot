@@ -1,0 +1,50 @@
+html, body, ul, li, form, input, div {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    background-color: inherit;
+}
+
+body {
+    background-color: #181818;
+    color: #00D800;
+    text-shadow: 0 0 2px #00E400;
+    font-family: monospace;
+}
+
+#chat-log {
+    list-style: none;
+    padding: 10px 0;
+    flex-grow: 1;
+    white-space: pre-wrap;
+}
+
+#chat-log li {
+    padding: 5px 0;
+}
+
+#message-input {
+    border: 1px solid #000000;
+    background-color: #242424;
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+#message-input:focus {
+    outline: 1px solid #E5E5E5;
+}
+
+.container {
+    width: 960px;
+    margin: 0 auto;
+    position: fixed;
+    top: 100px;
+    bottom: 100px;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    transform: translate(-50%, 0);
+}

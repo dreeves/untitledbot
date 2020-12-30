@@ -10,6 +10,7 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
         <!-- Place favicon.ico in the root directory -->
 
+        <link rel="stylesheet" href="/static/styles.css" type="text/css" media="screen" />
     </head>
     <body>
         <!--[if lt IE 8]>
@@ -20,13 +21,15 @@
             </p>
         <![endif]-->
 
-        <ul id="chat-log">
-        </ul>
+        <div class="container">
+            <ul id="chat-log">
+            </ul>
 
-        <form id="message-form">
-            <input id="message-input" disabled="disabled" type="text" name="" value="">
-        </form>
+            <form id="message-form">
+                <input id="message-input" disabled="disabled" type="text" name="" value="">
+            </form>
+        </div>
+
         <script type="text/javascript" src="/static/chat.js"></script>
-
     </body>
 </html>
