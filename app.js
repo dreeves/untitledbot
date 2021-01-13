@@ -2,19 +2,35 @@ const CLOG = console.log
 
 const { App, ExpressReceiver } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
 const ws = require('ws')
+const fs = require('fs')
 
 const receiver = new ExpressReceiver({ signingSecret: process.env.SLACK_SIGNING_SECRET })
 const app = new App({ token:         process.env.SLACK_BOT_TOKEN,
                       receiver
 })
 
-const lexiguess = require('./bots/lexiguess')
+var bots = []
 
-app.message(lexiguess.messageFilter, async ({ context, say }) => lexiguess.onMessage({
-  message: context.matches[0],
-  say
-}))
-app.event('app_home_opened', lexiguess.onHomeOpened)
+fs.readdir('./bots', (err, files) => {
+  if (err) {
+    CLOG(`Couldn't fetch bots, failed with ${err}`)
+    process.exit(1)
+  }
+  CLOG('hello')
+
+  files.forEach(file => {
+    const bot = require(`./bots/${file}`)
+    bots.push(bot)
+  })
+})
+
+bots.forEach(({ messageFilter, onMessage, onHomeOpened }) => {
+    app.message(messageFilter, async ({ context, say }) => say(onMessage(context.matches[0])))
+
+    if (onHomeOpened) {
+      app.event('app_home_opened', onHomeOpened)
+    }
+})
 
 // -----------------------------------------------------------------------------
 // ------------------------------- Web Interface -------------------------------
@@ -30,12 +46,11 @@ wsServer.on('connection', socket => {
   socket.send('Guess the word!')
 
   socket.on('message', message => {
-    if (message.match(lexiguess.messageFilter)) {
-      lexiguess.onMessage({
-        message,
-        say: l => wsServer.clients.forEach(s => s.send(l))
-      })
-    }
+    bots.forEach(({ messageFilter, onMessage }) => {
+      if (message.match(messageFilter)) {
+        wsServer.clients.forEach(s => s.send(onMessage(message)))
+      }
+    })
   })
 })
 

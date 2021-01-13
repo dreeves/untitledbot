@@ -225,10 +225,8 @@ Previously said we wouldn't admonish user about repeats: ${againflag}`
 // Someone says a single strictly alphabetic word in a channel our bot is in
 
 const messageFilter = /^\s*([a-z]{2,})\s*$/i
-const onMessage = async ({ message, say }) => {
-  const l = lexiguess(message)
-  if (l !== null) await say(l)
-}
+const onMessage = message => lexiguess(message)
+
 const onHomeOpened = async ({event, context}) => {
   try {
     CLOG(`app_home_opend: ${event.user}`)
