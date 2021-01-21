@@ -19,6 +19,9 @@ body {
     padding: 10px 0;
     flex-grow: 1;
     white-space: pre-wrap;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
 
 #chat-log li {
