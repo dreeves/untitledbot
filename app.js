@@ -16,7 +16,6 @@ fs.readdir('./bots', (err, files) => {
     CLOG(`Couldn't fetch bots, failed with ${err}`)
     process.exit(1)
   }
-  CLOG('hello')
 
   files.forEach(file => {
     const bot = require(`./bots/${file}`)
@@ -24,8 +23,15 @@ fs.readdir('./bots', (err, files) => {
   })
 })
 
+const botReact = (onMessage, message, say) => {
+    const response = onMessage(message)
+    response && say(response)
+}
+
 bots.forEach(({ messageFilter, onMessage, onHomeOpened }) => {
-    app.message(messageFilter, async ({ context, say }) => say(onMessage(context.matches[0])))
+    app.message(messageFilter, async ({ context, say }) => {
+      botReact(onMessage, context.matches[0], say)
+    })
 
     if (onHomeOpened) {
       app.event('app_home_opened', onHomeOpened)
@@ -48,7 +54,7 @@ wsServer.on('connection', socket => {
   socket.on('message', message => {
     bots.forEach(({ messageFilter, onMessage }) => {
       if (message.match(messageFilter)) {
-        wsServer.clients.forEach(s => s.send(onMessage(message)))
+        wsServer.clients.forEach(s => botReact(onMessage, message, response => s.send(response)))
       }
     })
   })
