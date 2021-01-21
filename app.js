@@ -63,9 +63,12 @@ wsServer.on('connection', socket => {
   socket.send('Guess the word!')
 
   socket.on('message', message => {
+    wsServer.clients.forEach(s => s.send(`> ${message}`))
     bots.forEach(({ messageFilter, onMessage }) => {
       if (message.match(messageFilter)) {
-        wsServer.clients.forEach(s => botReact(onMessage, message, response => s.send(response)))
+        botReact(onMessage, message, response => {
+          wsServer.clients.forEach(s => s.send(response))
+        })
       }
     })
   })
