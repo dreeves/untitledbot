@@ -1,6 +1,7 @@
 const CLOG = console.log
 
 const { App, ExpressReceiver } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
+const toEmoji = require('gemoji/name-to-emoji')
 const ws = require('ws')
 const fs = require('fs')
 
@@ -23,9 +24,19 @@ fs.readdir('./bots', (err, files) => {
   })
 })
 
+const emoji = shortcode => {
+  const capture = shortcode.match(/:(.*):/)
+  console.log(toEmoji['checkered_flag'])
+  console.log(`${capture}| ${shortcode}`)
+  return capture && toEmoji[capture[1]]
+}
+const emojify = text => {
+  return text.replace(/:([^\s\t\n]*):/g, (match, p) => toEmoji[p] || match)
+}
+
 const botReact = (onMessage, message, say) => {
     const response = onMessage(message)
-    response && say(response)
+    response && say(emojify(response))
 }
 
 bots.forEach(({ messageFilter, onMessage, onHomeOpened }) => {
