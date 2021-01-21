@@ -1,5 +1,5 @@
 window.addEventListener('load', () => {
-    const protocol = window.location.protocol === 'https' ? 'wss' : 'ws'
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const socket = new WebSocket(`${protocol}:${window.location.hostname}:${window.location.port}`)
     const messageForm = document.querySelector('#message-form')
     const messageInput = document.querySelector('#message-input')
