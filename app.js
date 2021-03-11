@@ -52,8 +52,8 @@ bots.forEach(({ messageFilter, onMessage, onHomeOpened }) => {
 // -----------------------------------------------------------------------------
 // ------------------------------- Web Interface -------------------------------
 
-const interface = require('./interface')
-interface(receiver)
+const web = require('./interfaces/web')
+web(receiver)
 
 // -----------------------------------------------------------------------------
 // ----------------------------- Start the server ------------------------------
