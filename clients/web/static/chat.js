@@ -11,10 +11,12 @@ window.addEventListener('load', () => {
 
     socket.addEventListener('message', e => {
         const messageLine = document.createElement('li')
+        messageLine.classList.add('chat-message')
         const messageLog = document.querySelector('#chat-log')
 
         messageLine.textContent = e.data
         messageLog.append(messageLine)
+        messageLine.scrollIntoView({ behavior: 'smooth' })
     })
 
     messageForm

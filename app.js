@@ -4,6 +4,7 @@ const { App, ExpressReceiver } = require("@slack/bolt") // Bolt package: github.
 const toEmoji = require('gemoji/name-to-emoji')
 const ws = require('ws')
 const fs = require('fs')
+const { generateSlug } = require('random-word-slugs')
 
 const receiver = new ExpressReceiver({ signingSecret: process.env.SLACK_SIGNING_SECRET })
 const app = new App({ token:         process.env.SLACK_BOT_TOKEN,
@@ -30,6 +31,7 @@ const emoji = shortcode => {
   console.log(`${capture}| ${shortcode}`)
   return capture && toEmoji[capture[1]]
 }
+
 const emojify = text => {
   return text.replace(/:([^\s\t\n]*):/g, (match, p) => toEmoji[p] || match)
 }
@@ -52,32 +54,48 @@ bots.forEach(({ messageFilter, onMessage, onHomeOpened }) => {
 // -----------------------------------------------------------------------------
 // ------------------------------- Web Interface -------------------------------
 
-const interface = require('./interface')
-interface(receiver)
+const web = require('./clients/web')
+web(receiver)
+
+// -----------------------------------------------------------------------------
+// ------------------------------- Other Clients -------------------------------
 
 // -----------------------------------------------------------------------------
 // ----------------------------- Start the server ------------------------------
 
+const clientNames = {}
 const wsServer = new ws.Server({ noServer: true })
-wsServer.on('connection', socket => {
-  socket.send('Guess the word!')
+wsServer.on('connection', (socket, req) => {
+    const ip = req.socket.remoteAddress
+    if (!clientNames[ip]) {
+        clientNames[ip] = generateSlug(2)
+    }
 
-  socket.on('message', message => {
-    wsServer.clients.forEach(s => s.send(`> ${message}`))
-    bots.forEach(({ messageFilter, onMessage }) => {
-      if (message.match(messageFilter)) {
-        botReact(onMessage, message, response => {
-          wsServer.clients.forEach(s => s.send(response))
+    const name = clientNames[ip]
+
+    socket.send('Guess the word!')
+    wsServer.clients.forEach(s => s.send(`${name} has joined the game.`))
+
+    socket.on('message', message => {
+        wsServer.clients.forEach(s => s.send(`${name} guesses: ${message}`))
+        bots.forEach(({ messageFilter, onMessage }) => {
+            if (message.match(messageFilter)) {
+                botReact(onMessage, message, response => {
+                    wsServer.clients.forEach(s => s.send(response))
+                })
+            }
         })
-      }
     })
-  })
+
+    socket.on('close', () => {
+        wsServer.clients.forEach(s => s.send(`${name} has left the game.`))
+    })
 })
 
 process.on('SIGINT', () => {
-  CLOG('Shutting down!')
-  wsServer.clients.forEach(s => s.send('Server is shutting down! This is most likely a deliberate act by the admin.'))
-  process.exit()
+    CLOG('Shutting down!')
+    wsServer.clients.forEach(s => s.send('Server is shutting down! This is most likely a deliberate act by the admin.'))
+    process.exit()
 })
 
 ;(async () => { 

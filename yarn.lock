@@ -799,6 +799,11 @@ qs@6.7.0:
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.7.0.tgz#41dc1a015e3d581f1621776be31afb2876a9b1bc"
   integrity sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==
 
+random-word-slugs@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/random-word-slugs/-/random-word-slugs-0.0.2.tgz#d725a85f638da0f4f9872ec6b6d0635f88e0a62c"
+  integrity sha512-vKwx5X94uBZqTZbCyHiYghyU1B7qbodY8dqTbaarQnT/boqD9KreKV0z7iUZqauQFuETTxdHWsm75EUOjUHC5A==
+
 range-parser@~1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/range-parser/-/range-parser-1.2.1.tgz#3cf37023d199e1c24d1a55b84800c2f3e6468031"

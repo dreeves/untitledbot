@@ -5,5 +5,5 @@ module.exports = function ({ app }) {
         res.sendFile(`${__dirname}/index.html`)
     })
 
-    app.use('/static', express.static('client'))
+    app.use('/static', express.static(`${__dirname}/static`))
 }
