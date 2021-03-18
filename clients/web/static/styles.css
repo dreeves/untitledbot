@@ -13,8 +13,13 @@ body {
 
 .chat-container {
     display: flex;
-    height: 100vh;
+    height: 80vh;
     flex-direction: column;
+    width: 640px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .chat-log {
@@ -27,9 +32,23 @@ body {
 
 .chat-message:first-child {
     margin-top: auto !important;
+    padding-top: 5px;
 }
 
 .chat-message {
     width: 100%;
-    flex: 0 0 47px;
+    flex: 0 0;
+    padding-bottom: 5px;
+}
+
+.chat-message:before {
+    content: ">";
+    padding-right: 2px;
+}
+
+.chat-container input {
+    width: 100%;
+    outline: none;
+    border: 1px solid black;
+    padding: 2px;
 }
