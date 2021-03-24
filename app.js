@@ -63,15 +63,9 @@ web(receiver)
 // -----------------------------------------------------------------------------
 // ----------------------------- Start the server ------------------------------
 
-const clientNames = {}
 const wsServer = new ws.Server({ noServer: true })
 wsServer.on('connection', (socket, req) => {
-  var ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  if (!clientNames[ip]) {
-    clientNames[ip] = generateSlug(2)
-  }
-
-  const name = clientNames[ip]
+  const name = generateSlug(2)
 
   socket.send('Guess the word!')
   wsServer.clients.forEach(s => s.send(`${name} has joined the game.`))
