@@ -66,30 +66,30 @@ web(receiver)
 const clientNames = {}
 const wsServer = new ws.Server({ noServer: true })
 wsServer.on('connection', (socket, req) => {
-    const ip = req.socket.remoteAddress
-    if (!clientNames[ip]) {
-        clientNames[ip] = generateSlug(2)
-    }
+  var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  if (!clientNames[ip]) {
+    clientNames[ip] = generateSlug(2)
+  }
 
-    const name = clientNames[ip]
+  const name = clientNames[ip]
 
-    socket.send('Guess the word!')
-    wsServer.clients.forEach(s => s.send(`${name} has joined the game.`))
+  socket.send('Guess the word!')
+  wsServer.clients.forEach(s => s.send(`${name} has joined the game.`))
 
-    socket.on('message', message => {
-        wsServer.clients.forEach(s => s.send(`${name} guesses: ${message}`))
-        bots.forEach(({ messageFilter, onMessage }) => {
-            if (message.match(messageFilter)) {
-                botReact(onMessage, message, response => {
-                    wsServer.clients.forEach(s => s.send(response))
-                })
-            }
+  socket.on('message', message => {
+    wsServer.clients.forEach(s => s.send(`${name} guesses: ${message}`))
+    bots.forEach(({ messageFilter, onMessage }) => {
+      if (message.match(messageFilter)) {
+        botReact(onMessage, message, response => {
+          wsServer.clients.forEach(s => s.send(response))
         })
+      }
     })
+  })
 
-    socket.on('close', () => {
-        wsServer.clients.forEach(s => s.send(`${name} has left the game.`))
-    })
+  socket.on('close', () => {
+    wsServer.clients.forEach(s => s.send(`${name} has left the game.`))
+  })
 })
 
 process.on('SIGINT', () => {
