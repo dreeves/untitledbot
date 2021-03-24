@@ -66,7 +66,7 @@ web(receiver)
 const clientNames = {}
 const wsServer = new ws.Server({ noServer: true })
 wsServer.on('connection', (socket, req) => {
-  var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  var ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   if (!clientNames[ip]) {
     clientNames[ip] = generateSlug(2)
   }
