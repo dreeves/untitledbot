@@ -1,15 +1,8 @@
 const CLOG = console.log
 
-const { App, ExpressReceiver } = require("@slack/bolt") // Bolt package: github.com/slackapi/bolt
 const toEmoji = require('gemoji/name-to-emoji')
-const ws = require('ws')
 const fs = require('fs')
 const { generateSlug } = require('random-word-slugs')
-
-const receiver = new ExpressReceiver({ signingSecret: process.env.SLACK_SIGNING_SECRET })
-const app = new App({ token:         process.env.SLACK_BOT_TOKEN,
-                      receiver
-})
 
 var bots = []
 
@@ -25,91 +18,35 @@ fs.readdir('./bots', (err, files) => {
   })
 })
 
-const emoji = shortcode => {
-  const capture = shortcode.match(/:(.*):/)
-  console.log(toEmoji['checkered_flag'])
-  console.log(`${capture}| ${shortcode}`)
-  return capture && toEmoji[capture[1]]
-}
-
 const emojify = text => {
   return text.replace(/:([^\s\t\n]*):/g, (match, p) => toEmoji[p] || match)
 }
 
 const botReact = (onMessage, message, say) => {
-    const response = onMessage(message)
-    response && say(emojify(response))
+  const response = onMessage(message)
+  response && say(emojify(response))
 }
 
-bots.forEach(({ messageFilter, onMessage, onHomeOpened }) => {
-    app.message(messageFilter, async ({ context, say }) => {
-      botReact(onMessage, context.matches[0], say)
-    })
-
-    if (onHomeOpened) {
-      app.event('app_home_opened', onHomeOpened)
-    }
-})
-
-// -----------------------------------------------------------------------------
-// ------------------------------- Web Interface -------------------------------
-
-const web = require('./clients/web')
-web(receiver)
-
-// -----------------------------------------------------------------------------
-// ------------------------------- Other Clients -------------------------------
-
-const discord = require('./clients/discord')
-discord((callback, message) => {
+const getBotResponses = (callback, message) => {
   bots.forEach(({ messageFilter, onMessage }) => {
     if (message.match(messageFilter)) {
       botReact(onMessage, message, callback)
     }
   })
-})
+}
 
 // -----------------------------------------------------------------------------
-// ----------------------------- Start the server ------------------------------
+// ---------------------------------- Clients ----------------------------------
 
-const wsServer = new ws.Server({ noServer: true })
-wsServer.on('connection', (socket, req) => {
-  const name = generateSlug(2)
+const slack = require('./clients/slack')
+slack(getBotResponses)
 
-  socket.send('Guess the word!')
-  wsServer.clients.forEach(s => s.send(`${name} has joined the game.`))
+const web = require('./clients/web')
+web(getBotResponses)
 
-  socket.on('message', message => {
-    wsServer.clients.forEach(s => s.send(`${name} guesses: ${message}`))
-    bots.forEach(({ messageFilter, onMessage }) => {
-      if (message.match(messageFilter)) {
-        botReact(onMessage, message, response => {
-          wsServer.clients.forEach(s => s.send(response))
-        })
-      }
-    })
-  })
+const discord = require('./clients/discord')
+discord(getBotResponses)
 
-  socket.on('close', () => {
-    wsServer.clients.forEach(s => s.send(`${name} has left the game.`))
-  })
-})
-
-process.on('SIGINT', () => {
-    CLOG('Shutting down!')
-    wsServer.clients.forEach(s => s.send('Server is shutting down! This is most likely a deliberate act by the admin.'))
-    process.exit()
-})
-
-;(async () => { 
-  const server = await app.start(process.env.PORT || 3000)
-  server.on('upgrade', (request, socket, head) => {
-    wsServer.handleUpgrade(request, socket, head, socket => {
-      wsServer.emit('connection', socket, request)
-    })
-  })
-  CLOG('Lexiguess app is running')
-})()
 
 // -----------------------------------------------------------------------------
 // ------------------------------- Scratch area --------------------------------
