@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@slack/bolt": "^2.0.1",
+    "discord.js": "^12.5.1",
     "gemoji": "^6.1.0",
     "random-word-slugs": "^0.0.2",
     "ws": "^7.4.1"

@@ -60,6 +60,15 @@ web(receiver)
 // -----------------------------------------------------------------------------
 // ------------------------------- Other Clients -------------------------------
 
+const discord = require('./clients/discord')
+discord((callback, message) => {
+  bots.forEach(({ messageFilter, onMessage }) => {
+    if (message.match(messageFilter)) {
+      botReact(onMessage, message, callback)
+    }
+  })
+})
+
 // -----------------------------------------------------------------------------
 // ----------------------------- Start the server ------------------------------
 
