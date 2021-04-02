@@ -5,9 +5,13 @@ const app = new App({ token: process.env.SLACK_BOT_TOKEN,
 
 module.exports = function (getBotResponses) {
   ;(async () => { 
+    // TODO assign ports to clients incrementally
     await app.start(process.env.PORT || 3000)
-    app.message(async ({ context, say }) => {
-      getBotResponses(say, context.matches[0])
+    app.message(async ({ message, say }) => {
+      getBotResponses(say, {
+        username: message.user,
+        message: message.text
+      })
     })
   })()
 }

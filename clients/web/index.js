@@ -3,6 +3,7 @@ const app = express()
 const http = require('http')
 const server = http.createServer(app)
 const ws = require('ws')
+const { generateSlug } = require('random-word-slugs')
 
 const wsServer = new ws.Server({ server })
 
@@ -18,8 +19,13 @@ module.exports = function (getBotResponses) {
     app.use('/static', express.static(`${__dirname}/static`))
 
     wsServer.on('connection', (socket, req) => {
+        const username = generateSlug()
+
         socket.on('message', message => {
-            getBotResponses(dispatchResponse, message)
+            getBotResponses(dispatchResponse, {
+                username,
+                message
+            })
         })
     })
 
