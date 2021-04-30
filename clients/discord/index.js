@@ -9,6 +9,7 @@ module.exports = (getBotResponses) => {
     getBotResponses(response => message.reply(response), {
       username: message.author.username,
       message: message.content
-    })
+    }),
+    message.reply
   })
 }
