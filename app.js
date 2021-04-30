@@ -27,7 +27,7 @@ const botReact = (onMessage, message, say) => {
   response && say(emojify(response))
 }
 
-const getBotResponses = (callback, message) => {
+const getBotResponses = (callback, { message }) => {
   bots.forEach(({ messageFilter, onMessage }) => {
     if (message.match(messageFilter)) {
       botReact(onMessage, message, callback)
