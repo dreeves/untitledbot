@@ -11,7 +11,7 @@ const dispatchResponse = (message) => {
     wsServer.clients.forEach(s => s.send(message))
 }
 
-module.exports = function (getBotResponses) {
+module.exports = pushMessage => {
     app.get('/', (req, res) => {
         res.sendFile(`${__dirname}/index.html`)
     })
@@ -22,10 +22,8 @@ module.exports = function (getBotResponses) {
         const username = generateSlug()
 
         socket.on('message', message => {
-            getBotResponses(dispatchResponse, {
-                username,
-                message
-            })
+            pushMessage(username,
+                        message)
         })
     })
 

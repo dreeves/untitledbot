@@ -4,7 +4,8 @@
   "description": "Unholy aggregation of chatbots",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "debug": "node --inspect  app.js"
   },
   "dependencies": {
     "@slack/bolt": "^2.0.1",
@@ -24,5 +25,6 @@
     "node",
     "glitch",
     "express"
-  ]
+  ],
+  "devDependencies": {}
 }
