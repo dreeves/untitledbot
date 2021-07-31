@@ -3,20 +3,14 @@ const Discord = require('discord.js')
 const client = new Discord.Client()
 console.log('Logging into Discord')
 client.login(process.env.DISCORD_BOT_TOKEN)
+.catch(e => console.log(e))
 
-var channels = []
-
-module.exports = pushMessage => {
+module.exports = (getBotResponses) => {
   client.on('message', message => {
-    pushMessage(
-      message.author.username,
-      message.content
-    )
-
-    if (channels.indexOf(message.channel) == -1) {
-      channels.push(message.channel)
-    }
+    getBotResponses(response => message.reply(response), {
+      username: message.author.username,
+      message: message.content
+    }),
+    message.reply
   })
-
-  return msg => channels.forEach(c => c.send(msg))
 }
